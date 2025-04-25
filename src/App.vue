@@ -25,8 +25,28 @@ body {
 }
 
 #app {
+  display: flex;
+  flex-direction: column;
   min-height: 100vh;
-  width: 100vw;
+}
+
+.main-content {
+  flex-grow: 1;
+  max-width: 1200px;
+  margin: 0 auto;
+  width: 100%;
+  padding: 20px;
+  display: flex;
+}
+
+.main-content .left {
+  background-color: #D7B2A5;
+  flex: 1;
+}
+
+.main-content .right {
+  background-color: #F8F6F3;
+  flex: 1;
 }
 
 h1, h2, h3, h4, h5, h6 {
