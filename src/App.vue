@@ -49,6 +49,17 @@ body {
   margin: 0 auto;
   width: 100%;
   padding: 20px;
+  display: flex;
+}
+
+.main-content .left {
+  background-color: #D7B2A5;
+  flex: 1;
+}
+
+.main-content .right {
+  background-color: #F8F6F3;
+  flex: 1;
 }
 
 h1, h2, h3, h4, h5, h6 {
