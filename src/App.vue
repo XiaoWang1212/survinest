@@ -1,25 +1,12 @@
 <template>
   <div id="app">
-    <NavBar />
-    
-    <main class="main-content">
-      <router-view />
-    </main>
-    
-    <Footer />
+    <router-view />
   </div>
 </template>
 
 <script>
-import Footer from '@/components/common/Footer.vue'
-import NavBar from '@/components/common/NavBar.vue'
-
 export default {
-  name: 'App',
-  components: {
-    NavBar,
-    Footer
-  }
+  name: 'App'
 }
 </script>
 
@@ -38,17 +25,8 @@ body {
 }
 
 #app {
-  display: flex;
-  flex-direction: column;
   min-height: 100vh;
-}
-
-.main-content {
-  flex-grow: 1;
-  max-width: 1200px;
-  margin: 0 auto;
-  width: 100%;
-  padding: 20px;
+  width: 100vw;
 }
 
 h1, h2, h3, h4, h5, h6 {

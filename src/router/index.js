@@ -1,40 +1,16 @@
 import { createRouter, createWebHistory } from 'vue-router'
-import HomePage from '../views/HomePage.vue'
-import ScanPage from '../views/ScanPage.vue'
-import SuppliesPage from '../views/SuppliesPage.vue'
-import EmergencyPage from '../views/EmergencyPage.vue'
-import AboutPage from '../views/AboutPage.vue'
+import HomePage from '@/views/HomePage.vue'
+import ScanPage from '@/views/ScanPage.vue'
+import SurvivalKitPage from '@/views/SurvivalKitPage.vue'
 
 const routes = [
-  {
-    path: '/',
-    name: 'Home',
-    component: HomePage,
-  },
-  {
-    path: '/scan',
-    name: 'Scan',
-    component: ScanPage
-  },
-  {
-    path: '/supplies',
-    name: 'Supplies',
-    component: SuppliesPage
-  },
-  {
-    path: '/emergency',
-    name: 'Emergency',
-    component: EmergencyPage
-  },
-  {
-    path: '/about',
-    name: 'About',
-    component: AboutPage
-  }
+  { path: '/', name: 'HomePage', component: HomePage },
+  { path: '/scan', name: 'ScanPage', component: ScanPage },
+  { path: '/survival-kit', name: 'SurvivalKitPage', component: SurvivalKitPage }
 ]
 
 const router = createRouter({
-  history: createWebHistory(process.env.BASE_URL),
+  history: createWebHistory(),
   routes
 })
 

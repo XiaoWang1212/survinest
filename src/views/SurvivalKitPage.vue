@@ -1,64 +1,43 @@
 <template>
-  <div class="scan-page" :class="{ 'transitioning': isTransitioning }">
+  <div class="survival-kit-page" :class="{ 'transitioning': isTransitioning }">
     <div class="switch-container">
-      <input type="checkbox" id="switch" class="switch-checkbox" @change="switchToKit">
-      <label for="switch" class="switch-label" title="切換到防災包功能">
+      <input type="checkbox" id="kitSwitch" class="switch-checkbox" @change="switchToScan" checked>
+      <label for="kitSwitch" class="switch-label" title="切換到安全掃描功能">
         <span class="switch-button"></span>
       </label>
     </div>
-    <h1>安全掃描功能</h1>
-    <SafetyScan />
-    <div class="" v-if="scanResults">
-      <h2>環境分析結果</h2>
-      <div class="danger-zones">
-        <h3>發現的危險區域：</h3>
-        <ul>
-          <li v-for="(zone, index) in scanResults.dangerZones" :key="index">
-            {{ zone.description }}
-          </li>
-        </ul>
-      </div>
-      <div class="escape-routes">
-        <h3>建議逃生路線：</h3>
-        <div class="route-map">
-          <!-- 這裡將顯示逃生路線圖 -->
-        </div>
-      </div>
-    </div>
+    <h1>防災包功能</h1>
+    <p>這裡將顯示防災包推薦物品的內容。</p>
+    <!-- 後續可加入防災包物品清單與互動功能 -->
   </div>
 </template>
 
 <script>
 import { ref } from 'vue'
 import { useRouter } from 'vue-router'
-import SafetyScan from '@/components/SafetyScan.vue'
 
 export default {
-  name: 'ScanPage',
-  components: {
-    SafetyScan
-  },
+  name: 'SurvivalKitPage',
   setup() {
     const router = useRouter()
     const isTransitioning = ref(false)
 
-    const switchToKit = async () => {
+    const switchToScan = async () => {
       isTransitioning.value = true
       await new Promise(resolve => setTimeout(resolve, 500))
-      router.push({ name: 'SurvivalKitPage' })
+      router.push({ name: 'ScanPage' })
     }
 
     return {
       isTransitioning,
-      switchToKit
-      
+      switchToScan
     }
   }
 }
 </script>
 
 <style scoped>
-.scan-page {
+.survival-kit-page {
   min-height: 100vh;
   background-color: #ffffff;
   position: relative;
@@ -107,20 +86,20 @@ export default {
   background: #2196F3;
 }
 
-.scan-page.transitioning {
-  animation: slideRight 0.5s ease forwards;
+.switch-checkbox:checked + .switch-label .switch-button {
+  transform: translateX(30px);
 }
 
-@keyframes slideRight {
+.survival-kit-page.transitioning {
+  animation: slideLeft 0.5s ease forwards;
+}
+
+@keyframes slideLeft {
   from {
     clip-path: inset(0 0 0 0);
   }
   to {
-    clip-path: inset(0 0 0 100%);
+    clip-path: inset(0 100% 0 0);
   }
-}
-
-.switch-checkbox:checked + .switch-label .switch-button {
-  transform: translateX(30px);
 }
 </style>
