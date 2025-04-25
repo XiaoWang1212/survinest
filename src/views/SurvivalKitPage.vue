@@ -8,16 +8,23 @@
     </div>
     <h1>防災包功能</h1>
     <p>這裡將顯示防災包推薦物品的內容。</p>
-    <!-- 後續可加入防災包物品清單與互動功能 -->
+    <SurvivalPlan />
+    <SupplyList />
   </div>
 </template>
 
 <script>
 import { ref } from 'vue'
 import { useRouter } from 'vue-router'
+import SurvivalPlan from '@/components/SurvivalPlan.vue'
+import SupplyList from '@/components/SupplyList.vue'
 
 export default {
   name: 'SurvivalKitPage',
+  components: {
+    SurvivalPlan,
+    SupplyList
+  },
   setup() {
     const router = useRouter()
     const isTransitioning = ref(false)
