@@ -6,9 +6,31 @@
         <span class="switch-button"></span>
       </label>
     </div>
-    <h1>安全掃描功能</h1>
+    <h1>我的避難環境</h1>
     <SafetyScan />
-    <div class="" v-if="scanResults">
+    
+    <!-- 上傳區 -->
+    <div class="upload-section">
+
+      <button class="analyze-button" @click="analyzeImage" :disabled="!uploadedImage">
+        執行分析
+      </button>
+    </div>
+
+    <!-- 新增方形區域和按鈕 -->
+    <div class="additional-section">
+      <div class="square-area">
+        <!-- 方形區域內容 -->
+        <p>這裡是放結果的區域你們再另外改大小</p>
+      </div>
+      <div class="button-group">
+        <button class="action-button" @click="showEvacuationRoute">避難路線</button>
+        <button class="action-button" @click="showHidingSpots">躲避位置</button>
+        <button class="action-button" @click="showSurvivalKitLocation">防災包放置位置</button>
+      </div>
+    </div>
+
+    <div class="scan-results" v-if="scanResults">
       <h2>環境分析結果</h2>
       <div class="danger-zones">
         <h3>發現的危險區域：</h3>
@@ -41,6 +63,8 @@ export default {
   setup() {
     const router = useRouter()
     const isTransitioning = ref(false)
+    const scanResults = ref(null)
+    const uploadedImage = ref(null)
 
     const switchToKit = async () => {
       isTransitioning.value = true
@@ -48,10 +72,47 @@ export default {
       router.push({ name: 'SurvivalKitPage' })
     }
 
+    const handleFileUpload = (event) => {
+      const file = event.target.files[0]
+      if (file) {
+        uploadedImage.value = URL.createObjectURL(file)
+      }
+    }
+
+    const analyzeImage = () => {
+      if (uploadedImage.value) {
+        // 模擬分析過程
+        scanResults.value = {
+          dangerZones: [
+            { description: '靠近窗戶的區域可能有碎玻璃危險' },
+            { description: '廚房附近可能有火災風險' }
+          ]
+        }
+      }
+    }
+
+    const showEvacuationRoute = () => {
+      alert('顯示避難路線')
+    }
+
+    const showHidingSpots = () => {
+      alert('顯示躲避位置')
+    }
+
+    const showSurvivalKitLocation = () => {
+      alert('顯示防災包放置位置')
+    }
+
     return {
       isTransitioning,
-      switchToKit
-      
+      switchToKit,
+      scanResults,
+      uploadedImage,
+      handleFileUpload,
+      analyzeImage,
+      showEvacuationRoute,
+      showHidingSpots,
+      showSurvivalKitLocation
     }
   }
 }
@@ -122,5 +183,79 @@ export default {
 
 .switch-checkbox:checked + .switch-label .switch-button {
   transform: translateX(30px);
+}
+
+.upload-section {
+  text-align: center;
+  margin: 20px 0;
+}
+
+.image-preview {
+  margin-top: 20px;
+  display: flex;
+  justify-content: center;
+}
+
+.image-preview img {
+  width: 300px;
+  height: 300px;
+  object-fit: cover;
+  border: 1px solid #ccc;
+  border-radius: 5px;
+}
+
+.analyze-button {
+  margin: 20px auto 0; /* 上方間距 20px，置中 */
+  padding: 10px 20px;
+  font-size: 16px;
+  background-color: #2196F3;
+  color: white;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+  display: block; /* 讓按鈕成為區塊元素以便置中 */
+}
+
+.analyze-button:disabled {
+  background-color: #ccc;
+  cursor: not-allowed;
+}
+
+.additional-section {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  margin-top: 20px;
+}
+
+.square-area {
+  width: 300px;
+  height: 300px;
+  background-color: #f0f0f0;
+  border: 1px solid #ccc;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  margin-right: 20px;
+}
+
+.button-group {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.action-button {
+  padding: 10px 20px;
+  font-size: 16px;
+  background-color: #2196F3;
+  color: white;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+}
+
+.action-button:hover {
+  background-color: #1976D2;
 }
 </style>
