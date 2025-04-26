@@ -200,12 +200,13 @@ export default {
 }
 
 .sub-text {
-  font-size: 1.4rem;
+  font-size: clamp(1.1rem, 2vw, 1.4rem); /* 使用 clamp 讓字體大小在一個範圍內自適應 */
   font-weight: bold;
   color: #000000;
   line-height: 1.7;
   margin-bottom: 25px;
   text-shadow: 1px 1px 2px rgba(255,255,255,0.8);
+  max-width: 800px; /* 限制最大寬度 */
 }
 
 .more-button {
@@ -313,5 +314,127 @@ export default {
   background-color: #c0392b;
   transform: translateY(-2px);
   box-shadow: 0 4px 12px rgba(231, 76, 60, 0.3);
+}
+/* 響應式設計 */
+@media (max-width: 1024px) {
+  .hero-section {
+    padding-left: 5%;
+    padding-top: 35%;
+  }
+
+  .sub-text {
+    padding-right: 5%;
+  }
+
+  .modal-content {
+    width: 90%;
+    margin: 0 20px;
+  }
+}
+
+@media (max-width: 768px) {
+  .hero-section {
+    padding-top: 40%;
+  }
+
+  .language-wrapper {
+    top: 15px;
+    left: 15px;
+  }
+
+  .top-buttons {
+    top: 15px;
+    right: 15px;
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  .btn-primary, .btn-secondary {
+    padding: 8px 15px;
+    font-size: 0.9rem;
+  }
+
+  .sub-text br {
+    display: none; 
+  }
+
+  .feature-title {
+    font-size: 1.1rem;
+  }
+
+  .feature p {
+    font-size: 1rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .hero-section {
+    padding-top: 45%;
+  }
+
+  .language-selector {
+    padding: 8px 12px;
+    font-size: 0.9rem;
+  }
+
+  .language-option {
+    padding: 10px 15px;
+    font-size: 0.9rem;
+  }
+
+  .btn-primary, .btn-secondary {
+    padding: 7px 12px;
+    font-size: 0.85rem;
+  }
+
+  .sub-text {
+    padding-right: 10px;
+  }
+
+  .more-button {
+    padding: 8px 20px;
+    font-size: 0.9rem;
+  }
+
+  .modal-content {
+    padding: 15px;
+  }
+
+  .feature {
+    margin-bottom: 20px;
+    padding: 10px;
+  }
+
+  .feature-title {
+    font-size: 1rem;
+    padding: 6px 12px;
+  }
+
+  .feature p {
+    font-size: 0.9rem;
+  }
+
+  .close-button {
+    padding: 8px 15px;
+    font-size: 0.9rem;
+  }
+}
+
+/* 處理較小的手機螢幕 */
+@media (max-width: 320px) {
+  .hero-section {
+    padding-top: 50%;
+  }
+
+  .language-selector, 
+  .btn-primary, 
+  .btn-secondary {
+    font-size: 0.8rem;
+    padding: 6px 10px;
+  }
+
+  .sub-text {
+    padding-right: 5px;
+  }
 }
 </style>
