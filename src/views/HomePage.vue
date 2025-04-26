@@ -143,15 +143,6 @@ export default {
   overflow: hidden; /* 確保圖片不會溢出 */
 }
 
-/* 移除舊的背景顏色 */
-.feature.safety-scan {
-  /* background-color: #f0ead2; */
-}
-
-.feature.survival-kit {
-  /* background-color: #dde5b6; */
-}
-
 /* 新增背景圖片樣式 */
 .feature-bg {
   position: absolute;
