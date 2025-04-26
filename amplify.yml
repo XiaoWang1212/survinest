@@ -12,14 +12,10 @@ frontend:
   customHeaders:
     - pattern: '**/*'
       headers:
-        - key: 'Strict-Transport-Security'
-          value: 'max-age=31536000; includeSubDomains'
-        - key: 'X-Frame-Options'
-          value: 'SAMEORIGIN'
-  proxies:
-    - path: '/api'
-      target: 'https://gidhnf5qp4.execute-api.us-west-2.amazonaws.com/dev'
-      status: '200'
-      headers:
-        'Access-Control-Allow-Origin': '*'
-        'Access-Control-Allow-Headers': '*'
+        - key: 'Cache-Control'
+          value: 'max-age=0, no-cache, no-store, must-revalidate'
+  redirects:
+    - source: '/api/<*>'
+      target: 'https://gidhnf5qp4.execute-api.us-west-2.amazonaws.com/dev/<*>'
+      status: '301'
+      condition: null
