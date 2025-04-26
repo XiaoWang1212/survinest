@@ -13,8 +13,8 @@
 
     <!-- 右上角登入按鈕 -->
     <div class="top-buttons">
-      <button class="btn-primary">註冊 / 登入</button>
-      <button class="btn-secondary">快速進入</button>
+      <button class="btn-primary" @click="navigateToLogin()">註冊 / 登入</button>
+      <button class="btn-secondary" @click="navigateToHome()">快速進入</button>
     </div>
 
     <!-- 主內容 -->
@@ -68,10 +68,16 @@ export default {
     },
     setLanguage(language) {
       this.currentLanguage = language;
-      this.showLanguageDropdown = false; // 自動關閉
+      this.showLanguageDropdown = false;
     },
     handleOutsideClick() {
-      this.showLanguageDropdown = false; // 點外面自動關
+      this.showLanguageDropdown = false;
+    },
+    navigateToLogin() {
+      this.$router.push({ name: 'LoginPage' });
+    },
+    navigateToHome() {
+      this.$router.push({ name: 'HomePage' });
     }
   }
 }
@@ -91,7 +97,7 @@ export default {
   padding-top: 29%;
 }
 
-/* 左上角語言選單 - 稍微變大 */
+/* 左上角語言選單 */
 .language-wrapper {
   position: absolute;
   top: 20px;
@@ -101,14 +107,22 @@ export default {
 .language-selector {
   position: relative;
   background-color: white;
-  color: #1c1c4f;
-  padding: 10px 15px; /* 調大 */
-  font-size: 1rem; /* 調大 */
-  border: 2px solid #1c1c4f;
+  color: #2c3e50;
+  padding: 10px 16px; /* 縮小 */
+  font-size: 1rem; /* 縮小 */
+  border: 2px solid #2c3e50;
   border-radius: 25px;
   font-weight: bold;
   cursor: pointer;
   white-space: nowrap;
+  transition: all 0.3s ease;
+}
+
+.language-selector:hover {
+  background-color: #2c3e50;
+  color: white;
+  transform: translateY(-2px); 
+  box-shadow: 0 4px 8px rgba(0,0,0,0.2);
 }
 
 .language-dropdown {
@@ -116,21 +130,26 @@ export default {
   top: 45px;
   left: 0;
   background: white;
-  border: 1px solid #ddd;
-  border-radius: 5px;
-  box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+  border: none;
+  border-radius: 10px;
+  box-shadow: 0 4px 15px rgba(0,0,0,0.1);
   z-index: 1001;
-  min-width: 120px;
+  min-width: 150px;
+  overflow: hidden;
 }
 
 .language-option {
-  padding: 8px 15px;
+  padding: 12px 20px;
   cursor: pointer;
   white-space: nowrap;
+  color: #2c3e50;
+  transition: all 0.2s ease;
 }
 
 .language-option:hover {
-  background-color: #f2f2f2;
+  background-color: #2c3e50;
+  color: white;
+  transform: translateX(5px);
 }
 
 /* 右上角登入按鈕 */
@@ -139,57 +158,72 @@ export default {
   top: 20px;
   right: 20px;
   display: flex;
-  gap: 10px;
+  gap: 15px;
   align-items: center;
 }
 
 .btn-primary {
-  background-color: #1c1c4f;
+  background-color: #2c3e50;
   color: white;
-  padding: 10px 20px;
+  padding: 10px 20px; /* 縮小 */
   border: none;
   border-radius: 25px;
   font-weight: bold;
   cursor: pointer;
+  transition: all 0.3s ease;
+  font-size: 1rem; /* 縮小 */
 }
 
 .btn-primary:hover {
-  background-color: #131339;
+  background-color: #1a242f;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(44, 62, 80, 0.3);
 }
 
 .btn-secondary {
   background-color: white;
-  color: #1c1c4f;
-  padding: 10px 20px;
-  border: 2px solid #1c1c4f;
+  color: #2c3e50;
+  padding: 10px 20px; /* 縮小 */
+  border: 2px solid #2c3e50;
   border-radius: 25px;
   font-weight: bold;
   cursor: pointer;
+  transition: all 0.3s ease;
+  font-size: 1rem; /* 縮小 */
 }
 
 .btn-secondary:hover {
-  background-color: #f2f2f2;
+  background-color: #2c3e50;
+  color: white;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(44, 62, 80, 0.2);
 }
 
 .sub-text {
-  font-size: 1.3rem;
+  font-size: 1.4rem;
   font-weight: bold;
   color: #000000;
-  line-height: 1.6;
-  margin-bottom: 20px;
+  line-height: 1.7;
+  margin-bottom: 25px;
+  text-shadow: 1px 1px 2px rgba(255,255,255,0.8);
 }
 
 .more-button {
   background-color: #2c3e50;
   color: white;
-  padding: 10px 20px;
+  padding: 10px 25px; /* 縮小 */
   border: none;
-  border-radius: 5px;
+  border-radius: 8px;
   cursor: pointer;
+  font-size: 1rem; /* 縮小 */
+  transition: all 0.3s ease;
+  font-weight: bold;
 }
 
 .more-button:hover {
   background-color: #1a242f;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(44, 62, 80, 0.3);
 }
 
 .modal {
@@ -198,57 +232,86 @@ export default {
   left: 0;
   width: 100%;
   height: 100%;
-  background: rgba(0,0,0,0.5);
+  background: rgba(0,0,0,0.6);
   display: flex;
   align-items: center;
   justify-content: center;
   z-index: 1000;
+  backdrop-filter: blur(3px);
 }
 
 .modal-content {
   background: white;
-  padding: 30px;
-  border-radius: 10px;
+  padding: 20px;
+  border-radius: 15px;
   max-width: 600px;
+  max-height: 70vh;
+  overflow-y: auto;
   text-align: left;
+  box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+  animation: modalSlideIn 0.3s ease;
+}
+
+@keyframes modalSlideIn {
+  from {
+    transform: translateY(-20px);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
 }
 
 .feature {
-  margin-bottom: 20px;
+  margin-bottom: 25px;
+  padding: 15px;
+  border-radius: 10px;
+  transition: all 0.3s ease;
+}
+
+.feature:hover {
+  background-color: #f8f9fa;
+  transform: translateX(5px);
 }
 
 .feature-title {
-  font-size: 1.2rem;
-  color: #2c3e50;
-  margin-bottom: 5px;
-  background-color: #ecf0f1;
-  padding: 5px 10px;
-  border-radius: 5px;
+  font-size: 1.3rem;
+  color: #1c1c4f;
+  margin-bottom: 10px;
+  background-color: #e8eaf6;
+  padding: 8px 15px;
+  border-radius: 8px;
   display: inline-block;
 }
 
 .feature p {
-  font-size: 1rem;
+  font-size: 1.1rem;
   color: #34495e;
-  line-height: 1.5;
+  line-height: 1.6;
 }
 
 .highlight {
-  color: #c0392b;
+  color: #e74c3c;
   font-weight: bold;
+  padding: 0 2px;
 }
 
 .close-button {
   background-color: #e74c3c;
   color: white;
-  padding: 8px 15px;
+  padding: 10px 20px;
   border: none;
-  border-radius: 5px;
+  border-radius: 8px;
   cursor: pointer;
-  margin-top: 15px;
+  margin-top: 20px;
+  font-weight: bold;
+  transition: all 0.3s ease;
 }
 
 .close-button:hover {
   background-color: #c0392b;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(231, 76, 60, 0.3);
 }
 </style>

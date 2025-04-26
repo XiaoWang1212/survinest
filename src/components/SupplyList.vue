@@ -1,220 +1,568 @@
 <template>
-    <div class="supply-list">
-      <div class="supply-header">
-        <h1>防災物資清單</h1>
-        <p class="subtitle">基本防災用品清單與存放建議</p>
-      </div>
-  
-      <div class="category-tabs">
-        <button 
-          v-for="(category, index) in categories" 
-          :key="index"
-          :class="['tab-button', { active: activeCategory === category.id }]"
-          @click="activeCategory = category.id"
-        >
-          {{ category.name }}
-        </button>
-      </div>
-  
-      <div class="supply-items">
-        <div v-for="item in filteredItems" :key="item.id" class="supply-item">
-          <div class="item-icon">{{ item.icon }}</div>
-          <div class="item-details">
-            <h3>{{ item.name }}</h3>
-            <p>{{ item.description }}</p>
-            <div class="item-tags">
+  <div class="supply-list">
+    <div class="supply-header">
+      <h1>防災物資清單</h1>
+      <p class="subtitle">選擇並儲存您的防災物資</p>
+    </div>
+
+    <!-- 類別切換按鈕 -->
+    <div class="category-tabs">
+      <button 
+        :class="['tab-button', { active: activeCategory === 'food' }]"
+        @click="activeCategory = 'food'"
+      >
+        食物
+      </button>
+      <button 
+        :class="['tab-button', { active: activeCategory === 'supplies' }]"
+        @click="activeCategory = 'supplies'"
+      >
+        用品
+      </button>
+    </div>
+
+    <!-- 食物區塊 -->
+    <div v-if="activeCategory === 'food'" class="food-section">
+      <!-- 食物清單 -->
+      <div class="food-items">
+        <h2>食物清單</h2>
+        <div v-for="item in suppliesByCategory.food" :key="item.id" class="list-item">
+          <label class="checkbox-label">
+            <input type="checkbox" v-model="checkedItems[item.id]" />
+            <div class="item-content">
+              <h3>{{ item.name }}</h3>
+              <p class="item-description">{{ item.description }}</p>
               <span class="priority-tag" :class="'priority-' + item.priority">
                 {{ priorityLabels[item.priority] }}
               </span>
-              <span class="storage-tag">
-                存放建議: {{ item.storage }}
-              </span>
             </div>
+          </label>
+        </div>
+      </div>
+      
+      <!-- 食物需求分析 - 直接顯示在下方 -->
+      <div class="food-analysis">
+        <h2>食物需求分析</h2>
+        <p>上傳照片並輸入您的資訊，系統將根據現有物資提供每日食物分配建議。</p>
+
+        <!-- 上傳照片 -->
+        <div class="upload-section">
+          <h3>上傳照片</h3>
+          <p class="hint-text">拍攝您目前的食物內容物</p>
+          <input type="file" @change="handleFileUpload" accept="image/*" class="file-input" />
+          <div v-if="uploadedImage" class="uploaded-image">
+            <img :src="uploadedImage" alt="上傳的照片" />
+          </div>
+        </div>
+
+        <!-- 輸入使用者資訊 -->
+        <div class="user-info-section">
+          <h3>輸入您的資訊</h3>
+          <div class="form-group">
+            <label>年齡：</label>
+            <input type="number" v-model="userInfo.age" min="0" />
+          </div>
+          
+          <div class="form-group">
+            <label>性別：</label>
+            <select v-model="userInfo.gender">
+              <option value="male">男性</option>
+              <option value="female">女性</option>
+            </select>
+          </div>
+          
+          <div class="form-group">
+            <label>身高 (cm)：</label>
+            <input type="number" v-model="userInfo.height" min="0" />
+          </div>
+          
+          <div class="form-group">
+            <label>體重 (kg)：</label>
+            <input type="number" v-model="userInfo.weight" min="0" />
+          </div>
+          
+          <button @click="calculateSuggestions" class="calculate-button">
+            計算建議
+          </button>
+        </div>
+
+        <!-- 顯示建議 -->
+        <div v-if="suggestions" class="suggestions-section">
+          <h3>每日飲食建議</h3>
+          <div class="suggestion-card">
+            <p class="calories">每餐建議熱量：<span>{{ suggestions.caloriesPerMeal }}</span> 大卡</p>
+            <p>每日食物分配：</p>
+            <ul class="food-distribution">
+              <li v-for="(item, index) in suggestions.foodDistribution" :key="index">
+                <span class="food-name">{{ item.name }}</span>：<span class="food-amount">{{ item.amount }}</span>
+              </li>
+            </ul>
           </div>
         </div>
       </div>
-  
-      <div class="supply-info-box">
-        <h3>防災包存放建議</h3>
-        <p>防災包應放置在家中容易取得且安全的位置，如入口處的鞋櫃旁或床頭櫃下方。確保全家人都知道防災包的位置，並定期檢查物資有效期。</p>
+    </div>
+
+    <!-- 用品清單 -->
+    <div v-else class="supply-categories">
+      <!-- 保暖衣物 -->
+      <div class="category">
+        <h2>保暖衣物</h2>
+        <div v-for="item in suppliesByCategory.clothing" :key="item.id" class="list-item">
+          <label class="checkbox-label">
+            <input type="checkbox" v-model="checkedItems[item.id]" />
+            <div class="item-content">
+              <h3>{{ item.name }}</h3>
+              <p class="item-description">{{ item.description }}</p>
+              <span class="priority-tag" :class="'priority-' + item.priority">
+                {{ priorityLabels[item.priority] }}
+              </span>
+            </div>
+          </label>
+        </div>
+      </div>
+
+      <!-- 個人醫藥用品 -->
+      <div class="category">
+        <h2>個人醫藥用品</h2>
+        <div v-for="item in suppliesByCategory.medical" :key="item.id" class="list-item">
+          <label class="checkbox-label">
+            <input type="checkbox" v-model="checkedItems[item.id]" />
+            <div class="item-content">
+              <h3>{{ item.name }}</h3>
+              <p class="item-description">{{ item.description }}</p>
+              <span class="priority-tag" :class="'priority-' + item.priority">
+                {{ priorityLabels[item.priority] }}
+              </span>
+            </div>
+          </label>
+        </div>
+      </div>
+
+      <!-- 重要物品 -->
+      <div class="category">
+        <h2>重要物品</h2>
+        <div v-for="item in suppliesByCategory.important" :key="item.id" class="list-item">
+          <label class="checkbox-label">
+            <input type="checkbox" v-model="checkedItems[item.id]" />
+            <div class="item-content">
+              <h3>{{ item.name }}</h3>
+              <p class="item-description">{{ item.description }}</p>
+              <span class="priority-tag" :class="'priority-' + item.priority">
+                {{ priorityLabels[item.priority] }}
+              </span>
+            </div>
+          </label>
+        </div>
+      </div>
+
+      <!-- 其他工具類 -->
+      <div class="category">
+        <h2>其他工具類</h2>
+        <div v-for="item in suppliesByCategory.tools" :key="item.id" class="list-item">
+          <label class="checkbox-label">
+            <input type="checkbox" v-model="checkedItems[item.id]" />
+            <div class="item-content">
+              <h3>{{ item.name }}</h3>
+              <p class="item-description">{{ item.description }}</p>
+              <span class="priority-tag" :class="'priority-' + item.priority">
+                {{ priorityLabels[item.priority] }}
+              </span>
+            </div>
+          </label>
+        </div>
       </div>
     </div>
-  </template>
-  
-  <script>
-  import { ref, computed } from 'vue'
-  
-  export default {
-    name: 'SupplyList',
-    setup() {
-      const activeCategory = ref('essential')
-      
-      const categories = [
-        { id: 'essential', name: '必備物資' },
-        { id: 'food', name: '食物與飲水' },
-        { id: 'first-aid', name: '醫療用品' },
-        { id: 'tools', name: '工具與設備' },
-        { id: 'special', name: '特殊需求' }
-      ]
-      
-      const supplies = [
-        // 必備物資
-        { id: 1, name: '緊急聯絡卡', description: '包含家人電話、地址、緊急聯絡人等資訊', category: 'essential', priority: 'high', storage: '隨身攜帶', icon: '📝' },
-        { id: 2, name: '手電筒', description: '建議使用LED手電筒，耗電量低且亮度高', category: 'essential', priority: 'high', storage: '床頭與入口處', icon: '🔦' },
-        { id: 3, name: '收音機', description: '手搖或電池供電收音機，以獲取災情與救援資訊', category: 'essential', priority: 'high', storage: '防災包', icon: '📻' },
-        
-        // 食物與飲水
-        { id: 4, name: '飲用水', description: '每人每天至少3公升，建議儲存3天份量', category: 'food', priority: 'high', storage: '陰涼處', icon: '💧' },
-        { id: 5, name: '罐頭食品', description: '高熱量、易保存的罐頭食品，注意保存期限', category: 'food', priority: 'high', storage: '乾燥處', icon: '🥫' },
-        { id: 6, name: '能量棒', description: '高熱量、輕便的應急食品', category: 'food', priority: 'medium', storage: '防災包', icon: '🍫' },
-        
-        // 醫療用品
-        { id: 7, name: '急救箱', description: '包含繃帶、紗布、消毒藥水等基本醫療用品', category: 'first-aid', priority: 'high', storage: '浴室櫃', icon: '🩹' },
-        { id: 8, name: '個人藥品', description: '慢性病患者的必備藥物，至少3-7天份量', category: 'first-aid', priority: 'high', storage: '冰箱或防災包', icon: '💊' },
-        { id: 9, name: '口罩', description: '防塵、防煙霧用N95口罩', category: 'first-aid', priority: 'medium', storage: '防災包', icon: '😷' },
-        
-        // 工具與設備
-        { id: 10, name: '多功能工具', description: '包含螺絲刀、小刀、開瓶器等功能', category: 'tools', priority: 'medium', storage: '工具箱或防災包', icon: '🔧' },
-        { id: 11, name: '防水布', description: '可用於緊急避雨或地面隔離', category: 'tools', priority: 'medium', storage: '防災包', icon: '🧵' },
-        { id: 12, name: '哨子', description: '求救用，聲音比喊叫更容易被發現', category: 'tools', priority: 'medium', storage: '防災包或鑰匙圈', icon: '📯' },
-        
-        // 特殊需求
-        { id: 13, name: '嬰兒用品', description: '奶粉、尿布、濕紙巾等', category: 'special', priority: 'high', storage: '嬰兒房', icon: '👶' },
-        { id: 14, name: '寵物用品', description: '寵物食品、水、簡易籠子、牽繩等', category: 'special', priority: 'medium', storage: '寵物活動區附近', icon: '🐾' },
-        { id: 15, name: '老人用品', description: '老花眼鏡、助行器、特殊藥物等', category: 'special', priority: 'high', storage: '長者房間', icon: '👴' },
-      ]
-      
-      const priorityLabels = {
-        high: '最高優先',
-        medium: '中度優先',
-        low: '建議準備'
-      }
-      
-      const filteredItems = computed(() => {
-        return supplies.filter(item => item.category === activeCategory.value)
-      })
-      
-      return {
-        activeCategory,
-        categories,
-        filteredItems,
-        priorityLabels
+
+    <button class="save-button" @click="saveChecklist">儲存清單</button>
+  </div>
+</template>
+
+<script>
+import { ref, computed } from 'vue'
+
+export default {
+  name: 'SupplyList',
+  setup() {
+    const activeCategory = ref('food') // 預設顯示「食物」
+    const checkedItems = ref({}) // 儲存勾選狀態
+    const uploadedImage = ref(null) // 儲存上傳的照片
+    const userInfo = ref({
+      age: null,
+      gender: 'male',
+      height: null,
+      weight: null
+    }) // 使用者資訊
+    const suggestions = ref(null) // 儲存建議結果
+
+    const supplies = [
+      // 食物
+      { id: 1, name: '飲用水', description: '每人每天至少3公升，建議儲存3天份量', category: 'food', priority: 'high' },
+      { id: 2, name: '防災食品', description: '高熱量、易保存的食品，注意保存期限', category: 'food', priority: 'high' },
+      { id: 3, name: '乾糧', description: '輕便且易保存的乾糧', category: 'food', priority: 'medium' },
+
+      // 保暖衣物
+      { id: 4, name: '暖暖包', description: '用於寒冷環境下保暖', category: 'clothing', priority: 'high' },
+      { id: 5, name: '衣服', description: '多準備一套乾淨衣物', category: 'clothing', priority: 'medium' },
+      { id: 6, name: '小被子', description: '輕便且保暖的小被子', category: 'clothing', priority: 'medium' },
+
+      // 個人醫藥用品
+      { id: 7, name: '急救箱', description: '包含繃帶、紗布、消毒藥水等基本醫療用品', category: 'medical', priority: 'high' },
+      { id: 8, name: '藥品', description: '個人常用藥品，如感冒藥、止痛藥等', category: 'medical', priority: 'high' },
+
+      // 重要物品
+      { id: 9, name: '少許現金', description: '用於緊急情況下的交易', category: 'important', priority: 'high' },
+      { id: 10, name: '證件影本', description: '身份證、護照等重要證件的影本', category: 'important', priority: 'high' },
+
+      // 其他工具類
+      { id: 11, name: '手電筒', description: '建議使用LED手電筒，耗電量低且亮度高', category: 'tools', priority: 'high' },
+      { id: 12, name: '哨子', description: '用於求救信號', category: 'tools', priority: 'medium' },
+      { id: 13, name: '收音機', description: '用於接收緊急廣播', category: 'tools', priority: 'medium' },
+      { id: 14, name: '電池', description: '用於手電筒、收音機等設備', category: 'tools', priority: 'high' },
+      { id: 15, name: '耐磨手套', description: '用於保護雙手', category: 'tools', priority: 'low' },
+      { id: 16, name: '瑞士刀', description: '多功能工具，適用於各種情況', category: 'tools', priority: 'medium' }
+    ]
+
+    const priorityLabels = {
+      high: '最高優先',
+      medium: '中度優先',
+      low: '建議準備'
+    }
+
+    const suppliesByCategory = computed(() => {
+      return supplies.reduce((acc, item) => {
+        if (!acc[item.category]) acc[item.category] = []
+        acc[item.category].push(item)
+        return acc
+      }, {})
+    })
+
+    const saveChecklist = () => {
+      const savedItems = Object.keys(checkedItems.value)
+        .filter(id => checkedItems.value[id])
+        .map(id => supplies.find(item => item.id === parseInt(id)))
+      console.log('已儲存的清單:', savedItems)
+      alert('清單已儲存！')
+    }
+
+    // 新增的函數：處理照片上傳
+    const handleFileUpload = (event) => {
+      const file = event.target.files[0]
+      if (file) {
+        const reader = new FileReader()
+        reader.onload = (e) => {
+          uploadedImage.value = e.target.result
+        }
+        reader.readAsDataURL(file)
       }
     }
+
+    // 新增的函數：計算建議
+    const calculateSuggestions = () => {
+      // 檢查必填欄位
+      if (!userInfo.value.age || !userInfo.value.height || !userInfo.value.weight) {
+        alert('請填寫完整的個人資訊')
+        return
+      }
+
+      // 根據體重計算基礎代謝率 (BMR)
+      const weight = userInfo.value.weight
+      const height = userInfo.value.height
+      const age = userInfo.value.age
+      const gender = userInfo.value.gender
+      
+      // 使用 Mifflin-St Jeor 公式計算 BMR
+      let bmr = 0
+      if (gender === 'male') {
+        bmr = 10 * weight + 6.25 * height - 5 * age + 5
+      } else {
+        bmr = 10 * weight + 6.25 * height - 5 * age - 161
+      }
+      
+      // 假設適度活動水平，每天總熱量需求約為 BMR * 1.3
+      const dailyCalories = Math.round(bmr * 1.3)
+      const caloriesPerMeal = Math.round(dailyCalories / 3)
+      
+      // 根據熱量計算食物分配
+      const carbs = Math.round((dailyCalories * 0.5) / 4) // 碳水化合物：50%，1克=4卡路里
+      const protein = Math.round((dailyCalories * 0.3) / 4) // 蛋白質：30%，1克=4卡路里
+      const fat = Math.round((dailyCalories * 0.2) / 9) // 脂肪：20%，1克=9卡路里
+
+      const foodDistribution = [
+        { name: '主食（米飯/麵條）', amount: Math.round(carbs * 0.7) + 'g' },
+        { name: '蔬菜水果', amount: '至少 400g' },
+        { name: '肉類/豆類', amount: protein + 'g' },
+        { name: '油脂', amount: fat + 'g' }
+      ]
+
+      suggestions.value = { caloriesPerMeal, foodDistribution }
+    }
+
+    return {
+      activeCategory,
+      suppliesByCategory,
+      priorityLabels,
+      checkedItems,
+      saveChecklist,
+      uploadedImage,
+      userInfo,
+      suggestions,
+      handleFileUpload,
+      calculateSuggestions
+    }
   }
-  </script>
-  
-  <style scoped>
-  .supply-list {
-    max-width: 1000px;
-    margin: 0 auto;
-    padding: 20px;
-  }
-  
-  .supply-header {
-    text-align: center;
-    margin-bottom: 30px;
-  }
-  
-  .subtitle {
-    color: #777;
-    font-size: 1.1rem;
-    margin-top: 10px;
-  }
-  
-  .category-tabs {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 10px;
-    margin-bottom: 20px;
-  }
-  
-  .tab-button {
-    padding: 10px 15px;
-    background-color: #f0f0f0;
-    border: none;
-    border-radius: 4px;
-    cursor: pointer;
-    transition: background-color 0.3s;
-  }
-  
-  .tab-button.active {
-    background-color: #3498db;
-    color: white;
-  }
-  
-  .supply-items {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
-    gap: 20px;
-    margin-bottom: 30px;
-  }
-  
-  .supply-item {
-    display: flex;
-    background-color: #f8f9fa;
-    border-radius: 8px;
-    padding: 15px;
-    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.05);
-  }
-  
-  .item-icon {
-    font-size: 32px;
-    margin-right: 15px;
-    display: flex;
-    align-items: center;
-  }
-  
-  .item-details {
-    flex-grow: 1;
-  }
-  
-  .item-details h3 {
-    margin-top: 0;
-    margin-bottom: 8px;
-  }
-  
-  .item-details p {
-    margin-bottom: 10px;
-    color: #555;
-  }
-  
-  .item-tags {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 10px;
-  }
-  
-  .priority-tag, .storage-tag {
-    font-size: 0.8rem;
-    padding: 3px 8px;
-    border-radius: 4px;
-  }
-  
-  .priority-high {
-    background-color: #ffecee;
-    color: #e74c3c;
-  }
-  
-  .priority-medium {
-    background-color: #fef9e7;
-    color: #f39c12;
-  }
-  
-  .priority-low {
-    background-color: #eafaf1;
-    color: #2ecc71;
-  }
-  
-  .storage-tag {
-    background-color: #ebf5fb;
-    color: #3498db;
-  }
-  
-  .supply-info-box {
-    background-color: #f8f9fa;
-    padding: 20px;
-    border-radius: 8px;
-    border-left: 4px solid #3498db;
-  }
-  </style>
+}
+</script>
+
+<style scoped>
+.supply-list {
+  max-width: 800px;
+  margin: 0 auto;
+  padding: 20px;
+  background-color: #f9f9f9;
+  border-radius: 12px;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+}
+
+.supply-header {
+  text-align: center;
+  margin-bottom: 20px;
+}
+
+.subtitle {
+  color: #777;
+  font-size: 1rem;
+  margin-top: 5px;
+}
+
+.category-tabs {
+  display: flex;
+  justify-content: center;
+  gap: 10px;
+  margin-bottom: 20px;
+}
+
+.tab-button {
+  padding: 10px 20px;
+  background-color: #e0e0e0;
+  border: none;
+  border-radius: 20px;
+  cursor: pointer;
+  transition: background-color 0.3s ease;
+}
+
+.tab-button.active {
+  background-color: #d4c2ad;
+  color: white;
+}
+
+.food-section {
+  display: flex;
+  flex-direction: column;
+  gap: 30px;
+}
+
+.food-items, .food-analysis {
+  background-color: white;
+  padding: 20px;
+  border-radius: 10px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  margin-bottom: 20px;
+}
+
+.food-items h2, .food-analysis h2 {
+  font-size: 1.5rem;
+  margin-bottom: 15px;
+  color: #2c3e50;
+  text-align: center;
+}
+
+.food-analysis p {
+  text-align: center;
+  margin-bottom: 20px;
+  color: #555;
+}
+
+.supply-categories {
+  display: flex;
+  flex-direction: column;
+  gap: 30px;
+}
+
+.category {
+  margin-bottom: 30px;
+}
+
+.category h2 {
+  font-size: 1.5rem;
+  margin-bottom: 15px;
+  color: #2c3e50;
+}
+
+.list-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  padding: 15px;
+  background-color: #ffffff;
+  border-radius: 8px;
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+  margin-bottom: 10px;
+}
+
+.checkbox-label {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  cursor: pointer;
+  width: 100%;
+}
+
+.item-content {
+  flex-grow: 1;
+}
+
+.item-description {
+  font-size: 0.9rem;
+  color: #555;
+  margin: 5px 0;
+}
+
+.priority-tag {
+  font-size: 0.8rem;
+  padding: 5px 10px;
+  border-radius: 4px;
+  background-color: #ffecec;
+  color: #e74c3c;
+}
+
+.priority-medium {
+  background-color: #fef9e7;
+  color: #f39c12;
+}
+
+.priority-low {
+  background-color: #eafaf1;
+  color: #2ecc71;
+}
+
+.save-button {
+  padding: 12px 20px;
+  background-color: #d4c2ad;
+  color: rgb(255, 255, 255);
+  border: none;
+  border-radius: 20px;
+  cursor: pointer;
+  transition: background-color 0.3s ease;
+  margin: 20px auto; /* 置中 */
+  display: block; /* 讓按鈕置中 */
+}
+
+.save-button:hover {
+  background-color: #877965;
+}
+
+.upload-section, .user-info-section, .suggestions-section {
+  margin-bottom: 30px;
+  padding: 20px;
+  border-radius: 8px;
+  background-color: #f9f9f9;
+}
+
+.upload-section h3, .user-info-section h3, .suggestions-section h3 {
+  margin-bottom: 15px;
+  color: #2c3e50;
+}
+
+.hint-text {
+  font-size: 0.9rem;
+  color: #777;
+  margin-bottom: 10px;
+}
+
+.file-input {
+  width: 100%;
+  padding: 10px;
+  margin-bottom: 15px;
+}
+
+.uploaded-image {
+  text-align: center;
+  margin-top: 15px;
+}
+
+.uploaded-image img {
+  max-width: 100%;
+  max-height: 200px;
+  border-radius: 8px;
+}
+
+.form-group {
+  margin-bottom: 15px;
+}
+
+.form-group label {
+  display: inline-block;
+  width: 100px;
+  margin-bottom: 5px;
+}
+
+.form-group input, .form-group select {
+  width: calc(100% - 100px);
+  padding: 8px;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+}
+
+.calculate-button {
+  padding: 10px 20px;
+  background-color: #56A59B;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  margin-top: 10px;
+  width: 100%;
+  transition: background-color 0.3s ease;
+}
+
+.calculate-button:hover {
+  background-color: #38776f;
+}
+
+.suggestion-card {
+  background-color: #fff;
+  padding: 15px;
+  border-radius: 8px;
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+}
+
+.calories {
+  font-size: 1.2rem;
+  margin-bottom: 15px;
+  color: #2c3e50;
+}
+
+.calories span {
+  font-weight: bold;
+  color: #e74c3c;
+}
+
+.food-distribution {
+  list-style-type: none;
+  padding-left: 0;
+}
+
+.food-distribution li {
+  padding: 8px 0;
+  border-bottom: 1px dashed #eee;
+}
+
+.food-name {
+  font-weight: bold;
+  color: #2c3e50;
+}
+
+.food-amount {
+  color: #3498db;
+}
+</style>
