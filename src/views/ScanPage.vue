@@ -1,52 +1,59 @@
 <template>
-  <div class="scan-page" :class="{ 'slide-out': isSliding }">
-    <div class="switch-container">
-      <button class="kit-button" @click="switchToKit" title="切換到防災包功能">
-        <img src="@/assets/photo/bag.jpg" alt="防災包" class="button-image">
-      </button>
-    </div>
-    <SafetyScan />
-
-    <!-- 分析結果區域 -->
-    <div class="results-section">
-      <div class="analysis-result" :class="resultColorClass" v-if="analysisResult">
-        <h3>分析結果:</h3>
-        <p>{{ analysisResult }}</p>
+  <Transition name="fade-in">
+    <div class="scan-page" :class="{ 'slide-out': isSliding }">
+      <!-- 頂部導航按鈕 -->
+      <div class="switch-container">
+        <button class="kit-button" @click="switchToKit" title="切換到防災包功能">
+          <img src="@/assets/photo/bag.jpg" alt="防災包" class="button-image">
+        </button>
       </div>
       
-      <!-- 結果圖與按鈕並排顯示 -->
-      <div class="result-container">
-        <!-- 結果圖 -->
-        <div class="result-image">
-          <p>這裡是結果圖</p>
-        </div>
+      <!-- 掃描元件 -->
+      <SafetyScan />
 
-        <!-- 圖標按鈕組 -->
-        <div class="icon-buttons-container">
-          <div class="icon-button-group">
-            <button class="icon-button" @click="showEvacuationRoute" title="避難路線">
-              <img src="@/assets/photo/run.png" alt="避難路線" class="icon-image" />
-            </button>
-            <div class="button-label">避難路線</div>
+      <!-- 分析結果區域 -->
+      <div class="results-section">
+        <Transition name="result-fade">
+          <div class="analysis-result" :class="resultColorClass" v-if="analysisResult">
+            <h3>分析結果:</h3>
+            <p>{{ analysisResult }}</p>
+          </div>
+        </Transition>
+        
+        <!-- 結果圖與按鈕並排顯示 -->
+        <div class="result-container">
+          <!-- 結果圖 -->
+          <div class="result-image">
+            <p>這裡是結果圖</p>
           </div>
 
-          <div class="icon-button-group">
-            <button class="icon-button" @click="showHidingSpots" title="躲避位置">
-              <img src="@/assets/photo/hide.png" alt="躲避位置" class="icon-image" />
-            </button>
-            <div class="button-label">躲避位置</div>
-          </div>
+          <!-- 圖標按鈕組 -->
+          <div class="icon-buttons-container">
+            <div class="icon-button-group" :style="`animation-delay: ${0.3}s`">
+              <button class="icon-button" @click="showEvacuationRoute" title="避難路線">
+                <img src="@/assets/photo/run.png" alt="避難路線" class="icon-image" />
+              </button>
+              <div class="button-label">避難路線</div>
+            </div>
 
-          <div class="icon-button-group">
-            <button class="icon-button" @click="showSurvivalKitLocation" title="防災包放置位置">
-              <img src="@/assets/photo/kit.png" alt="防災包放置位置" class="icon-image" />
-            </button>
-            <div class="button-label">防災包位置</div>
+            <div class="icon-button-group" :style="`animation-delay: ${0.5}s`">
+              <button class="icon-button" @click="showHidingSpots" title="躲避位置">
+                <img src="@/assets/photo/hide.png" alt="躲避位置" class="icon-image" />
+              </button>
+              <div class="button-label">躲避位置</div>
+            </div>
+
+            <div class="icon-button-group" :style="`animation-delay: ${0.7}s`">
+              <button class="icon-button" @click="showSurvivalKitLocation" title="防災包放置位置">
+                <img src="@/assets/photo/kit.png" alt="防災包放置位置" class="icon-image" />
+              </button>
+              <div class="button-label">防災包位置</div>
+            </div>
           </div>
         </div>
       </div>
     </div>
-  </div>
+  </Transition>
 </template>
 
 <script>
@@ -65,7 +72,24 @@ export default {
     const isSliding = ref(false);
     const uploadedImage = ref(null);
     const analysisResult = ref(null);
+    const pageLoaded = ref(false);
 
+    // 在組件掛載後觸發進入動畫
+    onMounted(() => {
+      // 給一個短暫的延遲，確保 DOM 完全渲染
+      setTimeout(() => {
+        pageLoaded.value = true;
+        
+        // 自動顯示初始分析結果，但延遲顯示以讓頁面先載入
+        setTimeout(() => {
+          analysisResult.value = '掃描完成：此地區安全風險評級為中等。建議查看避難路線和躲避位置。';
+        }, 1200);
+      }, 100);
+      
+      console.log('ScanPage component mounted');
+    });
+
+    // 切換到防災包頁面
     const switchToKit = () => {
       if (isTransitioning.value) return;
       
@@ -78,9 +102,10 @@ export default {
         // 導航後重設狀態
         isTransitioning.value = false;
         isSliding.value = false;
-      }, 500); // 500ms 應該與 CSS 動畫時間相符
+      }, 800); // 從 500ms 增加到 800ms，讓動畫有更多時間完成
     };
 
+    // 滾動到結果區域
     const scrollToResult = () => {
       const resultSection = document.querySelector('.analysis-result');
       if (resultSection) {
@@ -92,24 +117,40 @@ export default {
       }
     };
 
+    // 分析上傳的圖片
     const analyzeImage = () => {
       analysisResult.value = '掃描完成：此地區安全風險評級為中等。建議查看避難路線和躲避位置。';
       scrollToResult();
     };
 
+    // 顯示避難路線
     const showEvacuationRoute = () => {
-      analysisResult.value = '避難路線已標示：請沿著綠色箭頭方向前進至最近的安全區域。';
-      scrollToResult();
+      // 先清空結果，觸發淡入效果
+      analysisResult.value = null;
+      
+      // 延遲顯示新結果，創造淡入效果
+      setTimeout(() => {
+        analysisResult.value = '避難路線已標示：請沿著綠色箭頭方向前進至最近的安全區域。';
+        scrollToResult();
+      }, 150);
     };
 
+    // 顯示躲避位置
     const showHidingSpots = () => {
-      analysisResult.value = '躲避位置已標示：藍色區域表示適合躲避的安全位置。';
-      scrollToResult();
+      analysisResult.value = null;
+      setTimeout(() => {
+        analysisResult.value = '躲避位置已標示：藍色區域表示適合躲避的安全位置。';
+        scrollToResult();
+      }, 150);
     };
 
+    // 顯示防災包位置
     const showSurvivalKitLocation = () => {
-      analysisResult.value = '防災包建議放置位置：紅色標記處為建議放置防災包的位置。';
-      scrollToResult();
+      analysisResult.value = null;
+      setTimeout(() => {
+        analysisResult.value = '防災包建議放置位置：紅色標記處為建議放置防災包的位置。';
+        scrollToResult();
+      }, 150);
     };
 
     // 計算屬性：根據分析結果設置底色類名
@@ -124,12 +165,6 @@ export default {
       return '';
     });
 
-    // 確保組件加載完成後初始化
-    onMounted(() => {
-      // 這裡可以添加任何需要在組件掛載後執行的初始化代碼
-      console.log('ScanPage component mounted');
-    });
-
     return {
       isTransitioning,
       isSliding,
@@ -142,6 +177,7 @@ export default {
       analysisResult,
       resultColorClass,
       scrollToResult,
+      pageLoaded
     };
   },
 };
@@ -152,14 +188,38 @@ body {
   overflow-x: hidden;
 }
 
+/* 新增：頁面淡入效果 */
+.fade-in-enter-active,
+.fade-in-leave-active {
+  transition: opacity 2s ease, transform 1.5s ease;
+}
+
+.fade-in-enter-from,
+.fade-in-leave-to {
+  opacity: 0;
+  transform: translateY(30px);
+}
+
+/* 新增：結果淡入效果 */
+.result-fade-enter-active,
+.result-fade-leave-active {
+  transition: opacity 0.6s ease, transform 0.6s ease;
+}
+
+.result-fade-enter-from,
+.result-fade-leave-to {
+  opacity: 0;
+  transform: translateY(10px);
+}
+
 .scan-page {
   min-height: 100vh;
   background-color: rgba(255, 165, 0, 0.1);
   position: relative;
   padding-bottom: 50px;
   overflow-x: hidden;
-  transition: transform 0.5s ease;
-  padding-top: 35px; /* 添加頂部內邊距 */
+  transition: transform 0.8s ease; /* 從 0.5s 增加到 0.8s */
+  padding-top: 35px;
 }
 
 /* 滑動動畫樣式 */
@@ -172,6 +232,19 @@ body {
   top: 20px;
   right: 20px;
   z-index: 1000;
+  opacity: 0;
+  animation: fadeInFromTop 1.2s ease forwards; /* 新增：淡入動畫 */
+}
+
+@keyframes fadeInFromTop {
+  0% {
+    opacity: 0;
+    transform: translateY(-20px);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
 .kit-button {
@@ -205,7 +278,7 @@ body {
   height: 100%;
   object-fit: contain;
   border-radius: 0;
-  pointer-events: none; /* 確保點擊穿透到按鈕 */
+  pointer-events: none;
 }
 
 .results-section {
@@ -251,6 +324,19 @@ body {
   gap: 20px;
   max-width: 800px;
   margin: 0 auto;
+  opacity: 0; /* 初始不可見 */
+  animation: fadeInUp 1.2s ease 0.3s forwards; /* 新增：淡入動畫，延遲0.3秒 */
+}
+
+@keyframes fadeInUp {
+  0% {
+    opacity: 0;
+    transform: translateY(30px);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
 .result-image {
@@ -282,6 +368,19 @@ body {
   flex-direction: column;
   align-items: center;
   gap: 3px;
+  opacity: 0; /* 初始不可見 */
+  animation: fadeInRight 1s ease forwards; /* 新增：淡入動畫 */
+}
+
+@keyframes fadeInRight {
+  0% {
+    opacity: 0;
+    transform: translateX(20px);
+  }
+  100% {
+    opacity: 1;
+    transform: translateX(0);
+  }
 }
 
 .icon-button {
@@ -295,14 +394,15 @@ body {
   justify-content: center;
   align-items: center;
   transition: all 0.2s ease;
-  padding: 8px; /* 減少內邊距，讓圖片可以更大 */
+  padding: 8px;
   z-index: 5;
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
 }
+
 .icon-image {
-  width: 90%; /* 增加圖片尺寸 */
-  height: 90%; /* 增加圖片尺寸 */
-  object-fit: contain; /* 使用 contain 確保圖片完整顯示 */
+  width: 90%;
+  height: 90%;
+  object-fit: contain;
   border-radius: 50%;
   background-color: #ffffff;
 }
@@ -324,9 +424,7 @@ body {
   margin-top: 5px;
 }
 
-
-/* 先清理重複的媒體查詢，整合成一個統一的版本 */
-
+/* 響應式設計 */
 @media (max-width: 1200px) {
   .result-container {
     width: 100%;
@@ -402,7 +500,7 @@ body {
   }
 
   .result-image {
-    width: calc(100% + 20px); /* 讓圖片比容器寬 */
+    width: calc(100% + 20px);
     margin-left: -10px;
     margin-right: -10px;
     height: 350px;
@@ -432,4 +530,15 @@ body {
     padding: 15px 10px;
   }
 }
+
+/* 觸控設備優化 */
+@media (hover: none) {
+  .kit-button:active,
+  .icon-button:active {
+    transform: scale(0.95);
+    background-color: #f0f0f0;
+  }
+}
+
+
 </style>
