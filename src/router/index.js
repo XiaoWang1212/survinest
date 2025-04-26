@@ -2,9 +2,11 @@ import { createRouter, createWebHistory } from 'vue-router'
 import HomePage from '@/views/HomePage.vue'
 import ScanPage from '@/views/ScanPage.vue'
 import SurvivalKitPage from '@/views/SurvivalKitPage.vue'
+import StartPage from '@/views/StartPage.vue'
 
 const routes = [
-  { path: '/', name: 'HomePage', component: HomePage },
+  { path: '/', name: 'StartPage', component: StartPage },
+  { path: '/home', name: 'HomePage', component: HomePage },
   { path: '/scan', name: 'ScanPage', component: ScanPage },
   { path: '/survival-kit', name: 'SurvivalKitPage', component: SurvivalKitPage }
 ]
