@@ -121,8 +121,28 @@
             <p class="calories">
               每餐建議熱量：<span>{{ suggestions.caloriesPerMeal }}</span> 大卡
             </p>
-            <p>每日食物分配：</p>
-            
+            <button @click="analyzeNutrition" class="analyze-button">
+              分析營養需求
+            </button>
+            <div v-if="nutritionAnalysis" class="nutrition-analysis-section">
+              <p>每日食物分配：</p>
+              <h3>災難時期營養需求分析</h3>
+              <div class="analysis-card">
+                <div v-if="nutritionAnalysis.loading" class="loading-container">
+                  <div class="loading-spinner"></div>
+                  <p>正在分析營養需求...</p>
+                </div>
+                <div v-else class="nutrition-content">
+                  <p class="instruction-title">
+                    建議保存以下食物以滿足營養需求:
+                  </p>
+                  <div
+                    class="nutrition-text"
+                    v-html="formattedNutritionText"
+                  ></div>
+                </div>
+              </div>
+            </div>
           </div>
         </div>
       </div>
@@ -235,6 +255,7 @@
         weight: null,
       }); // 使用者資訊
       const suggestions = ref(null); // 儲存建議結果
+      const nutritionAnalysis = ref(null); // 儲存營養分析結果
 
       const supplies = [
         // 食物
@@ -572,6 +593,112 @@
         alert("使用本地計算功能 (API 不可用)");
       };
 
+      const analyzeNutrition = async () => {
+        // 檢查是否填寫了基本資訊
+        if (
+          !userInfo.value.age ||
+          !userInfo.value.height ||
+          !userInfo.value.weight
+        ) {
+          alert("請先填寫完整的個人資訊");
+          return;
+        }
+
+        // 設置加載狀態
+        nutritionAnalysis.value = {
+          loading: true,
+          text: "",
+        };
+
+        try {
+          // 根據環境選擇正確的 API URL
+          const isAmplify = window.location.hostname.includes("amplifyapp.com");
+          const baseUrl = isAmplify
+            ? "https://8v4h7gjyik.execute-api.us-west-2.amazonaws.com/dev"
+            : "supply";
+          const apiUrl = `${baseUrl}/get`;
+
+          console.log("發送營養分析請求到:", apiUrl);
+
+          const response = await fetch(apiUrl, {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify({
+              calories: parseInt(suggestions.value.caloriesPerMeal),
+            }),
+          });
+
+          console.log("營養分析API狀態:", response.status);
+
+          if (!response.ok) {
+            throw new Error(`服務器錯誤 (${response.status})`);
+          }
+
+          // 處理 API 響應
+          const responseText = await response.text();
+          console.log("營養分析原始響應:", responseText);
+
+          let data;
+          try {
+            data = JSON.parse(responseText);
+            console.log("解析後的營養分析數據:", data);
+
+            // 檢查是否有嵌套的 JSON 字符串在 body 屬性中
+            if (data.body && typeof data.body === "string") {
+              try {
+                data = JSON.parse(data.body);
+                console.log("從 body 中解析的營養分析數據:", data);
+              } catch (nestedError) {
+                // 如果 body 不是有效的 JSON，則直接使用它作為文本
+                nutritionAnalysis.value = {
+                  loading: false,
+                  text: data.body,
+                };
+                return;
+              }
+            }
+
+            // 設置營養分析結果
+            nutritionAnalysis.value = {
+              loading: false,
+              text: data.recommendation || data.text || "沒有可用的營養建議",
+            };
+          } catch (jsonError) {
+            console.error("JSON 解析錯誤:", jsonError);
+
+            // 如果無法解析為 JSON，則直接顯示文本
+            nutritionAnalysis.value = {
+              loading: false,
+              text: responseText || "無法解析回應",
+            };
+          }
+        } catch (error) {
+          console.error("營養分析 API 調用失敗:", error);
+          nutritionAnalysis.value = {
+            loading: false,
+            text: "無法獲取營養建議，請稍後再試。" + error.message,
+          };
+        }
+      };
+
+      // 添加格式化營養文本的計算屬性
+      const formattedNutritionText = computed(() => {
+        if (!nutritionAnalysis.value || !nutritionAnalysis.value.text) {
+          return "";
+        }
+
+        // 將文本中的換行轉換為 HTML 換行標籤
+        return nutritionAnalysis.value.text
+          .replace(/\n/g, "<br>")
+          .replace(/\*\*(.*?)\*\*/g, "<strong>$1</strong>")
+          .replace(/\*(.*?)\*/g, "<em>$1</em>")
+          .replace(/- (.*?)(?=\n|$)/g, "<li>$1</li>")
+          .replace(/<li>(.*?)<\/li>/g, "<ul><li>$1</li></ul>")
+          .replace(/<\/ul><ul>/g, "");
+      });
+
       return {
         activeCategory,
         suppliesByCategory,
@@ -583,6 +710,9 @@
         suggestions,
         handleFileUpload,
         calculateSuggestions,
+        analyzeNutrition,
+        nutritionAnalysis,
+        formattedNutritionText,
       };
     },
   };
@@ -865,6 +995,113 @@
     color: #3498db;
   }
 
+  .analysis-actions {
+    display: flex;
+    justify-content: center;
+    gap: 15px;
+    margin-top: 20px;
+  }
+
+  .calculate-button,
+  .analyze-button {
+    padding: 10px 20px;
+    color: #ffffff;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    width: 45%;
+    max-width: 200px;
+    transition: background-color 0.3s ease;
+  }
+
+  .calculate-button {
+    background-color: #56a59b;
+  }
+
+  .analyze-button {
+    background-color: #5c6bc0;
+  }
+
+  .calculate-button:hover {
+    background-color: #419287;
+  }
+
+  .analyze-button:hover {
+    background-color: #3f51b5;
+  }
+
+  .nutrition-analysis-section {
+    margin-top: 30px;
+    padding: 20px;
+    border-radius: 8px;
+    background-color: #f9f9f9;
+  }
+
+  .nutrition-analysis-section h3 {
+    margin-bottom: 15px;
+    color: #2c3e50;
+    text-align: center;
+  }
+
+  .analysis-card {
+    background-color: #fff;
+    padding: 15px;
+    border-radius: 8px;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+  }
+
+  .loading-container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 20px 0;
+  }
+
+  .loading-spinner {
+    width: 40px;
+    height: 40px;
+    border: 4px solid #f3f3f3;
+    border-top: 4px solid #5c6bc0;
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+    margin-bottom: 15px;
+  }
+
+  @keyframes spin {
+    0% {
+      transform: rotate(0deg);
+    }
+    100% {
+      transform: rotate(360deg);
+    }
+  }
+
+  .instruction-title {
+    font-weight: 600;
+    color: #2c3e50;
+    margin-bottom: 15px;
+    text-align: center;
+  }
+
+  .nutrition-text {
+    line-height: 1.6;
+    color: #333;
+    text-align: left;
+  }
+
+  .nutrition-text ul {
+    padding-left: 20px;
+    margin-bottom: 10px;
+  }
+
+  .nutrition-text li {
+    margin-bottom: 5px;
+  }
+
+  .nutrition-text strong {
+    color: #5c6bc0;
+  }
+
   /* 添加響應式設計 */
   @media (max-width: 768px) {
     .supply-list {
@@ -948,6 +1185,18 @@
 
     .uploaded-image img {
       max-height: 150px;
+    }
+
+    .analysis-actions {
+      flex-direction: column;
+      align-items: center;
+    }
+
+    .calculate-button,
+    .analyze-button {
+      width: 80%;
+      max-width: none;
+      margin-bottom: 10px;
     }
   }
 

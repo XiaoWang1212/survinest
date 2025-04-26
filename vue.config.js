@@ -17,6 +17,13 @@ module.exports = defineConfig({
           '^/scanapi': ''  
         }
       },
+      '/supply': {
+        target: "https://8v4h7gjyik.execute-api.us-west-2.amazonaws.com/dev",
+        changeOrigin: true,
+        pathRewrite: {
+          '^/supply': ''  
+        }
+      },
     }
   }
 });
