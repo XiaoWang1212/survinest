@@ -423,7 +423,7 @@
             weight: parseFloat(userInfo.value.weight),
             height: parseFloat(userInfo.value.height),
             age: parseFloat(userInfo.value.age),
-            activityLevel: 1.3,
+            activityLevel: 1.2,
           });
 
           const response = await fetch(apiUrl, {

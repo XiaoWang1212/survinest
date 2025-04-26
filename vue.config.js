@@ -9,7 +9,14 @@ module.exports = defineConfig({
         pathRewrite: {
           '^/api': ''  // 將 '/api/compute' 重寫為 '/compute'
         }
-      }
+      },
+      '/scanapi': {
+        target: "https://t1lwim1as7.execute-api.us-west-2.amazonaws.com/dev",
+        changeOrigin: true,
+        pathRewrite: {
+          '^/scanapi': ''  
+        }
+      },
     }
   }
 });
