@@ -206,7 +206,7 @@
         this.error = null;
         
         try {
-          const response = await fetch('https://gidhnf5qp4.execute-api.us-west-2.amazonaws.com/dev/compute', {
+          const response = await fetch('api/compute', {
             method: 'POST',
             headers: {
               'Content-Type': 'application/json',
