@@ -109,6 +109,14 @@
   </script>
   
   <style scoped>
+  .scan-header h1 {
+    text-align: center;
+    margin-bottom: 20px;
+    color: #624444;
+  }
+  body {
+    overflow-x: hidden; /* 禁止水平滾動 */
+  }
   .safety-scan {
     max-width: 1000px;
     margin: 0 auto;
@@ -130,27 +138,28 @@
     margin-bottom: 30px;
   }
   
-  .upload-container {
-    border: 2px dashed #ddd;
-    border-radius: 8px;
-    padding: 40px;
-    text-align: center;
-    cursor: pointer;
-    transition: background-color 0.3s;
-  }
+.upload-container {
+  border: 2px dashed #ddd;
+  border-radius: 8px;
+  padding: 40px;
+  text-align: center;
+  cursor: pointer;
+  background-color: #ffffff; /* 預設為白色 */
+  transition: background-color 0.3s;
+}
+
+.upload-container:hover {
+  background-color: #d2b48c; /* 靠近時變為淺咖啡色 */
+}
+
+.upload-icon {
+  font-size: 48px;
+  margin-bottom: 15px;
+}
   
-  .upload-container:hover {
-    background-color: #f8f9fa;
-  }
-  
-  .upload-icon {
-    font-size: 48px;
-    margin-bottom: 15px;
-  }
-  
-  .preview-container {
-    text-align: center;
-  }
+.preview-container {
+  text-align: center;
+}
   
   .preview-image {
     max-width: 100%;
