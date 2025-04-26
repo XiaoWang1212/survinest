@@ -1,32 +1,34 @@
 <template>
   <div class="survival-kit-page" :class="{ 'transitioning': isTransitioning }">
     <!-- 人數輸入彈窗 -->
-    <div v-if="showPeopleInput" class="people-input-overlay">
-      <div class="people-input-modal">
-        <h2>請輸入家中人數</h2>
-        <input
-          type="number"
-          v-model="peopleCount"
-          min="1"
-          placeholder="輸入人數"
-        />
-        <button @click="confirmPeopleCount">確認</button>
+    <Transition name="fade">
+      <div v-if="showPeopleInput" class="people-input-overlay">
+        <div class="people-input-modal">
+          <h2>請輸入家中人數</h2>
+          <input
+            type="number"
+            v-model="peopleCount"
+            min="1"
+            placeholder="輸入人數"
+          />
+          <button @click="confirmPeopleCount">確認</button>
+        </div>
       </div>
-    </div>
+    </Transition>
 
     <!-- 防災包內容 -->
-    <div v-else>
-      <div class="switch-container">
-        <input
-          type="checkbox"
-          id="kitSwitch"
-          class="switch-checkbox"
-          @change="switchToScan"
-          checked
-        />
-        <label for="kitSwitch" class="switch-label" title="切換到安全掃描功能">
-          <span class="switch-button"></span>
-        </label>
+    <div :class="{ 'content-visible': !showPeopleInput }">
+      <!-- 替換切換開關為 icon 按鈕 -->
+      <div class="page-switch">
+        <button @click="switchToScan" class="icon-button" title="切換到安全掃描功能">
+          <span class="scan-icon">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="24" height="24">
+              <path fill="none" d="M0 0h24v24H0z"/>
+              <path d="M4 4h6v6H4V4zm0 10h6v6H4v-6zm10-10h6v6h-6V4zm0 10h6v6h-6v-6z" fill="#2c3e50"/>
+            </svg>
+          </span>
+          <span class="button-text">安全掃描</span>
+        </button>
       </div>
 
       <!-- 防災包標題與描述 -->
@@ -93,6 +95,35 @@ export default {
   transition: all 0.3s ease;
 }
 
+/* 淡入淡出動畫 */
+.fade-enter-active,
+.fade-leave-active {
+  transition: opacity 0.5s ease, transform 0.5s ease;
+}
+
+.fade-enter-from,
+.fade-leave-to {
+  opacity: 0;
+  transform: scale(0.95);
+}
+
+.content-visible {
+  opacity: 0;
+  animation: fadeInContent 2s ease forwards;
+  animation-delay: 0.3s; /* 等彈窗淡出後再開始顯示內容 */
+}
+
+@keyframes fadeInContent {
+  0% {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
 .people-input-overlay {
   position: fixed;
   top: 0;
@@ -117,6 +148,17 @@ export default {
   animation: fadeIn 0.3s ease-in-out;
 }
 
+@keyframes fadeIn {
+  0% {
+    opacity: 0;
+    transform: translateY(-20px);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
 .people-input-modal h2 {
   margin-bottom: 20px;
   font-size: 1.5rem;
@@ -135,17 +177,62 @@ export default {
 
 .people-input-modal button {
   padding: 12px 24px;
-  background: #56A59B;
+  background: #F4D9B0;
   color: #2c3e50;
   border: none;
   border-radius: 6px;
   cursor: pointer;
   font-size: 1rem;
   transition: background 0.3s ease;
+  width: 100%;
+  max-width: 200px;
 }
 
 .people-input-modal button:hover {
   background: #eac89a;
+}
+
+/* 新增 icon 按鈕樣式 */
+.page-switch {
+  display: flex;
+  justify-content: flex-end;
+  margin-bottom: 10px;
+}
+
+.icon-button {
+  display: flex;
+  align-items: center;
+  padding: 8px 12px;
+  background: #F4D9B0;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+}
+
+.icon-button:hover {
+  background: #eac89a;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+}
+
+.scan-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-right: 8px;
+}
+
+.scan-icon svg {
+  width: 20px;
+  height: 20px;
+}
+
+.button-text {
+  font-size: 0.9rem;
+  font-weight: 500;
+  color: #2c3e50;
 }
 
 .kit-header {
@@ -165,7 +252,7 @@ export default {
   line-height: 1.8;
 }
 
-/* 新增的響應式設計部分 */
+/* 響應式設計 */
 @media (max-width: 768px) {
   .kit-header h1 {
     font-size: 1.8rem;
@@ -177,6 +264,11 @@ export default {
   
   .people-input-modal {
     padding: 20px;
+  }
+  
+  .people-input-modal button {
+    max-width: 180px;
+    padding: 10px 20px;
   }
 }
 
@@ -199,8 +291,24 @@ export default {
   }
   
   .people-input-modal button {
-    padding: 10px 18px;
+    max-width: 100%;
+    padding: 12px 18px;
     font-size: 0.9rem;
+    margin: 0 auto;
+    min-height: 44px;
+  }
+  
+  .icon-button {
+    padding: 6px 10px;
+  }
+  
+  .button-text {
+    font-size: 0.8rem;
+  }
+  
+  .scan-icon svg {
+    width: 18px;
+    height: 18px;
   }
 }
 
@@ -210,70 +318,15 @@ export default {
   transform: translateY(20px);
 }
 
-/* 添加到 SurvivalKitPage.vue 的 style 部分 */
-
-/* 已有的按鈕樣式 */
-.people-input-modal button {
-  padding: 12px 24px;
-  background: #F4D9B0;
-  color: #2c3e50;
-  border: none;
-  border-radius: 6px;
-  cursor: pointer;
-  font-size: 1rem;
-  transition: background 0.3s ease;
-  width: 100%; /* 使按鈕在移動端填滿容器 */
-  max-width: 200px; /* 在桌面端限制寬度 */
-}
-
-.people-input-modal button:hover {
-  background: #eac89a;
-}
-
-/* 添加觸控設備的活躍狀態 */
+/* 觸控設備優化 */
 @media (hover: none) {
-  .people-input-modal button:active {
+  .people-input-modal button:active,
+  .icon-button:active {
     background: #eac89a;
   }
-}
-
-/* 平板響應式設計 */
-@media (max-width: 768px) {
-  .people-input-modal button {
-    max-width: 180px;
-    padding: 10px 20px;
-  }
   
-  /* 修改切換開關的大小 */
-  .switch-label {
-    width: 60px;
-    height: 30px;
-  }
-  
-  .switch-button {
-    width: 26px;
-    height: 26px;
-  }
-}
-
-/* 手機響應式設計 */
-@media (max-width: 480px) {
-  .people-input-modal button {
-    max-width: 100%; /* 在手機上讓按鈕填滿 */
-    padding: 12px 18px;
-    font-size: 0.9rem;
-    margin: 0 auto;
-  }
-  
-  /* 縮小切換開關尺寸 */
-  .switch-container {
-    transform: scale(0.8);
-    transform-origin: right top;
-  }
-  
-  /* 確保按鈕在觸控時有足夠的點擊區域 */
-  .people-input-modal button {
-    min-height: 44px; /* 蘋果建議的最小觸控高度 */
+  .icon-button:active {
+    transform: translateY(0);
   }
 }
 </style>
