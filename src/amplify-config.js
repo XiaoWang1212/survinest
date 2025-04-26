@@ -5,7 +5,6 @@ try {
     "aws_project_region": "us-west-2",
     "Auth": {
       "region": "us-west-2",
-      "userPoolId": "us-west-2_adUgt5d9m",
       "userPoolWebClientId": "35e3m2vlp4ijca2agas9ekula0",
       "identityPoolId": "us-west-2:cd7301c7-7170-4460-a40b-ec51a74e75c4",
       "mandatorySignIn": false,
