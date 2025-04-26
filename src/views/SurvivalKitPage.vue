@@ -87,9 +87,10 @@ export default {
 
 <style scoped>
 .survival-kit-page {
-  background: #C7E1DC; /* 整個頁面背景改為 #C7E1DC */
-  min-height: 100vh; /* 確保背景覆蓋整個視窗 */
-  padding: 20px; /* 增加內邊距，讓內容不緊貼邊緣 */
+  background: #C7E1DC;
+  min-height: 100vh;
+  padding: 20px;
+  transition: all 0.3s ease;
 }
 
 .people-input-overlay {
@@ -98,7 +99,7 @@ export default {
   left: 0;
   width: 100%;
   height: 100%;
-  background: #C7E1DC; /* 彈窗後面的背景改為 #C7E1DC */
+  background: #C7E1DC;
   display: flex;
   justify-content: center;
   align-items: center;
@@ -106,11 +107,11 @@ export default {
 }
 
 .people-input-modal {
-  background: #ffffff; /* 彈窗背景改為白色 */
+  background: #ffffff;
   padding: 30px;
   border-radius: 12px;
   text-align: center;
-  box-shadow: 0 8px 16px rgba(0, 0, 0, 0.3); /* 增加陰影效果 */
+  box-shadow: 0 8px 16px rgba(0, 0, 0, 0.3);
   max-width: 400px;
   width: 90%;
   animation: fadeIn 0.3s ease-in-out;
@@ -134,7 +135,7 @@ export default {
 
 .people-input-modal button {
   padding: 12px 24px;
-  background: #F4D9B0; /* 確認按鈕改為 #F4D9B0 */
+  background: #56A59B;
   color: #2c3e50;
   border: none;
   border-radius: 6px;
@@ -144,23 +145,135 @@ export default {
 }
 
 .people-input-modal button:hover {
-  background: #eac89a; /* 按鈕懸停效果 */
+  background: #eac89a;
 }
 
 .kit-header {
-  text-align: center; /* 置中對齊 */
-  margin: 30px 0; /* 增加上下間距 */
+  text-align: center;
+  margin: 30px 0;
 }
 
 .kit-header h1 {
-  font-size: 2rem; /* 增大標題字體 */
-  color: #2c3e50; /* 深色標題 */
+  font-size: 2rem;
+  color: #2c3e50;
   margin-bottom: 10px;
 }
 
 .kit-header p {
-  font-size: 1.2rem; /* 增大描述字體 */
-  color: #555; /* 中性色描述 */
-  line-height: 1.8; /* 增加行距 */
+  font-size: 1.2rem;
+  color: #555;
+  line-height: 1.8;
+}
+
+/* 新增的響應式設計部分 */
+@media (max-width: 768px) {
+  .kit-header h1 {
+    font-size: 1.8rem;
+  }
+  
+  .kit-header p {
+    font-size: 1rem;
+  }
+  
+  .people-input-modal {
+    padding: 20px;
+  }
+}
+
+@media (max-width: 480px) {
+  .survival-kit-page {
+    padding: 15px;
+  }
+  
+  .kit-header h1 {
+    font-size: 1.5rem;
+  }
+  
+  .kit-header p {
+    font-size: 0.9rem;
+    line-height: 1.6;
+  }
+  
+  .people-input-modal h2 {
+    font-size: 1.3rem;
+  }
+  
+  .people-input-modal button {
+    padding: 10px 18px;
+    font-size: 0.9rem;
+  }
+}
+
+/* 添加過渡效果 */
+.transitioning {
+  opacity: 0;
+  transform: translateY(20px);
+}
+
+/* 添加到 SurvivalKitPage.vue 的 style 部分 */
+
+/* 已有的按鈕樣式 */
+.people-input-modal button {
+  padding: 12px 24px;
+  background: #F4D9B0;
+  color: #2c3e50;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 1rem;
+  transition: background 0.3s ease;
+  width: 100%; /* 使按鈕在移動端填滿容器 */
+  max-width: 200px; /* 在桌面端限制寬度 */
+}
+
+.people-input-modal button:hover {
+  background: #eac89a;
+}
+
+/* 添加觸控設備的活躍狀態 */
+@media (hover: none) {
+  .people-input-modal button:active {
+    background: #eac89a;
+  }
+}
+
+/* 平板響應式設計 */
+@media (max-width: 768px) {
+  .people-input-modal button {
+    max-width: 180px;
+    padding: 10px 20px;
+  }
+  
+  /* 修改切換開關的大小 */
+  .switch-label {
+    width: 60px;
+    height: 30px;
+  }
+  
+  .switch-button {
+    width: 26px;
+    height: 26px;
+  }
+}
+
+/* 手機響應式設計 */
+@media (max-width: 480px) {
+  .people-input-modal button {
+    max-width: 100%; /* 在手機上讓按鈕填滿 */
+    padding: 12px 18px;
+    font-size: 0.9rem;
+    margin: 0 auto;
+  }
+  
+  /* 縮小切換開關尺寸 */
+  .switch-container {
+    transform: scale(0.8);
+    transform-origin: right top;
+  }
+  
+  /* 確保按鈕在觸控時有足夠的點擊區域 */
+  .people-input-modal button {
+    min-height: 44px; /* 蘋果建議的最小觸控高度 */
+  }
 }
 </style>
