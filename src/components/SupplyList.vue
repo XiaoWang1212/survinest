@@ -351,8 +351,8 @@ export default {
 }
 
 .tab-button.active {
-  background-color: #d4c2ad;
-  color: white;
+  background-color: #F4D9B0;
+  color: #2c3e50;
 }
 
 .food-section {
@@ -447,8 +447,8 @@ export default {
 
 .save-button {
   padding: 12px 20px;
-  background-color: #d4c2ad;
-  color: rgb(255, 255, 255);
+  background-color: #F4D9B0;
+  color: #2c3e50;
   border: none;
   border-radius: 20px;
   cursor: pointer;
@@ -458,7 +458,7 @@ export default {
 }
 
 .save-button:hover {
-  background-color: #877965;
+  background-color: #eac89a;
 }
 
 .upload-section, .user-info-section, .suggestions-section {
@@ -471,18 +471,22 @@ export default {
 .upload-section h3, .user-info-section h3, .suggestions-section h3 {
   margin-bottom: 15px;
   color: #2c3e50;
+  text-align: center;
 }
 
 .hint-text {
   font-size: 0.9rem;
   color: #777;
   margin-bottom: 10px;
+  text-align: center;
 }
 
 .file-input {
   width: 100%;
   padding: 10px;
   margin-bottom: 15px;
+  display: block;
+  margin: 0 auto;
 }
 
 .uploaded-image {
@@ -496,37 +500,48 @@ export default {
   border-radius: 8px;
 }
 
+/* 修改表單樣式 - 使輸入框置中 */
 .form-group {
+  display: flex;
+  flex-direction: column;
+  align-items: center; /* 水平置中 */
   margin-bottom: 15px;
+  text-align: center; /* 文字置中 */
 }
 
 .form-group label {
-  display: inline-block;
-  width: 100px;
-  margin-bottom: 5px;
+  width: 100%;
+  margin-bottom: 8px;
+  text-align: center; /* 標籤文字置中 */
+  font-weight: 500;
 }
 
 .form-group input, .form-group select {
-  width: calc(100% - 100px);
-  padding: 8px;
+  width: 80%; /* 控制輸入框的寬度 */
+  max-width: 300px; /* 限制最大寬度 */
+  padding: 10px;
   border: 1px solid #ddd;
-  border-radius: 4px;
+  border-radius: 6px;
+  text-align: center; /* 輸入文字置中 */
 }
 
+/* 修改計算建議按鈕 - 縮小並置中 */
 .calculate-button {
   padding: 10px 20px;
-  background-color: #56A59B;
-  color: white;
+  background-color: #56A59B; /* 統一按鈕顏色 */
+  color: #ffffff;
   border: none;
   border-radius: 6px;
   cursor: pointer;
-  margin-top: 10px;
-  width: 100%;
+  margin: 20px auto 5px; /* 上下間距調整，並水平置中 */
+  width: 60%; /* 縮小按鈕寬度 */
+  max-width: 200px; /* 限制最大寬度 */
   transition: background-color 0.3s ease;
+  display: block; /* 確保按鈕可以置中 */
 }
 
 .calculate-button:hover {
-  background-color: #38776f;
+  background-color: #419287; /* hover 效果 */
 }
 
 .suggestion-card {
@@ -540,6 +555,7 @@ export default {
   font-size: 1.2rem;
   margin-bottom: 15px;
   color: #2c3e50;
+  text-align: center;
 }
 
 .calories span {
@@ -555,6 +571,7 @@ export default {
 .food-distribution li {
   padding: 8px 0;
   border-bottom: 1px dashed #eee;
+  text-align: center;
 }
 
 .food-name {
@@ -564,5 +581,95 @@ export default {
 
 .food-amount {
   color: #3498db;
+}
+
+/* 添加響應式設計 */
+@media (max-width: 768px) {
+  .supply-list {
+    max-width: 95%;
+    padding: 15px;
+  }
+  
+  .food-items, .food-analysis {
+    padding: 15px;
+  }
+  
+  .category h2, .food-items h2, .food-analysis h2 {
+    font-size: 1.3rem;
+  }
+  
+  .item-content h3 {
+    font-size: 1rem;
+  }
+  
+  .calculate-button {
+    width: 70%; /* 平板上稍微寬一點 */
+  }
+}
+
+@media (max-width: 480px) {
+  .supply-list {
+    padding: 10px;
+  }
+  
+  .supply-header h1 {
+    font-size: 1.5rem;
+  }
+  
+  .subtitle {
+    font-size: 0.9rem;
+  }
+  
+  .category-tabs {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+  }
+  
+  .tab-button {
+    width: 100%;
+    padding: 8px 15px;
+  }
+  
+  .form-group input, .form-group select {
+    width: 90%; /* 手機上稍微寬一點 */
+  }
+  
+  .calculate-button {
+    width: 80%; /* 手機上更寬 */
+    font-size: 0.9rem;
+  }
+  
+  .list-item {
+    padding: 12px;
+  }
+  
+  .checkbox-label {
+    flex-direction: row;
+    align-items: flex-start;
+  }
+  
+  .checkbox-label input[type="checkbox"] {
+    margin-top: 5px;
+  }
+  
+  .save-button {
+    padding: 10px 15px;
+    font-size: 0.9rem;
+    width: 80%;
+    max-width: 200px;
+  }
+  
+  .uploaded-image img {
+    max-height: 150px;
+  }
+}
+
+/* 觸控設備優化 */
+@media (hover: none) {
+  .calculate-button:active, .save-button:active, .tab-button:active {
+    transform: scale(0.98);
+    background-color: #56A59B;
+  }
 }
 </style>
