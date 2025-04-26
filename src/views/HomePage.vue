@@ -9,11 +9,30 @@
         'hovered': hoveredFeature === 'safety-scan',
         'expanding': expandingFeature === 'safety-scan'
       }"
+      :data-darkening="isDarkening"
     >
-      <div class="overlay" v-if="hoveredFeature === 'safety-scan'"></div>
-      <h2>安全掃描功能</h2>
-      <p>快速分析環境，提供逃生路線建議。</p>
+      <div class="overlay" v-if="hoveredFeature === 'safety-scan'">
+        <h2>安全掃描功能</h2>
+        <div class="feature-content">
+          <p class="main-desc">快速分析環境，提供全方位安全建議</p>
+          <ul class="feature-list">
+            <li>
+              <span class="icon">🗺️</span>
+              <span>專屬逃生路線規劃</span>
+            </li>
+            <li>
+              <span class="icon">🏠</span>
+              <span>智能避難位置推薦</span>
+            </li>
+            <li>
+              <span class="icon">📍</span>
+              <span>防災包最佳擺放建議</span>
+            </li>
+          </ul>
+        </div>
+      </div>
     </div>
+
     <div 
       class="feature survival-kit" 
       @click="navigateTo('SurvivalKitPage')" 
@@ -23,10 +42,28 @@
         'hovered': hoveredFeature === 'survival-kit',
         'expanding': expandingFeature === 'survival-kit'
       }"
+      :data-darkening="isDarkening"
     >
-      <div class="overlay" v-if="hoveredFeature === 'survival-kit'"></div>
-      <h2>防災包功能</h2>
-      <p>推薦必備物品，幫助您準備防災包。</p>
+      <div class="overlay" v-if="hoveredFeature === 'survival-kit'">
+        <h2>防災包功能</h2>
+        <div class="feature-content">
+          <p class="main-desc">智能物資管理，確保應急準備充足</p>
+          <ul class="feature-list">
+            <li>
+              <span class="icon">📋</span>
+              <span>必備物品清單檢查</span>
+            </li>
+            <li>
+              <span class="icon">⚖️</span>
+              <span>物資數量配置建議</span>
+            </li>
+            <li>
+              <span class="icon">🕒</span>
+              <span>食物飲水用量規劃</span>
+            </li>
+          </ul>
+        </div>
+      </div>
     </div>
   </div>
 </template>
@@ -41,6 +78,11 @@ export default {
     const router = useRouter()
     const hoveredFeature = ref('')
     const expandingFeature = ref('')
+    const isDarkening = ref(false)
+
+    const hoverFeature = (feature) => {
+      hoveredFeature.value = feature
+    }
 
     const navigateTo = async (page) => {
       if (page === 'ScanPage') {
@@ -49,20 +91,24 @@ export default {
         expandingFeature.value = 'survival-kit'
       }
       
-      // 等待動畫完成後再跳轉
+      // 等待展開動畫完成
       await new Promise(resolve => setTimeout(resolve, 500))
+      
+      // 開始暗化
+      isDarkening.value = true
+      
+      // 等待暗化動畫完成
+      await new Promise(resolve => setTimeout(resolve, 800))
+      
       router.push({ name: page })
-    }
-
-    const hoverFeature = (feature) => {
-      hoveredFeature.value = feature
     }
 
     return {
       navigateTo,
       hoverFeature,
       hoveredFeature,
-      expandingFeature
+      expandingFeature,
+      isDarkening
     }
   }
 }
@@ -88,13 +134,7 @@ export default {
   transition: all 0.5s ease;
   height: 100%;
   z-index: 1;
-}
-
-.feature h2, .feature p {
-  position: relative;
-  z-index: 2;
-  color: white;
-  text-shadow: 1px 1px 3px rgba(0, 0, 0, 0.3);
+  overflow: hidden; /* 新增：確保圖片不會溢出 */
 }
 
 .feature.safety-scan {
@@ -105,27 +145,9 @@ export default {
   background-color: #dde5b6;
 }
 
-.feature .overlay {
-  position: absolute;
-  top: 0;
-  height: 100%;
-  background-color: rgba(0, 0, 0, 0.5);
-  opacity: 0;
-  transition: opacity 0.3s ease;
-}
-
-.feature.safety-scan .overlay {
-  left: 0;
-  width: 100%;
-}
-
-.feature.survival-kit .overlay {
-  right: 0;
-  width: 100%;
-}
-
-.feature.hovered .overlay {
-  opacity: 1;
+/* Remove feature-icon styles */
+.feature-icon {
+  display: none;
 }
 
 .feature.expanding {
@@ -138,13 +160,15 @@ export default {
 .feature.safety-scan.expanding {
   left: 0;
   right: auto;
-  animation: expandRight 0.5s ease forwards;
+  width: 50vw;
+  animation: expandRight 0.5s ease-out forwards;
 }
 
 .feature.survival-kit.expanding {
   right: 0;
   left: auto;
-  animation: expandLeft 0.5s ease forwards;
+  width: 50vw;
+  animation: expandRight 0.5s ease-out forwards;
 }
 
 @keyframes expandRight {
@@ -156,12 +180,119 @@ export default {
   }
 }
 
-@keyframes expandLeft {
-  from {
-    width: 50vw;
+.feature.expanding[data-darkening="true"] {
+  width: 100vw !important; /* 確保暗化時是全螢幕 */
+  left: 0 !important; /* 確保從左側開始 */
+  animation: darken 0.8s ease-in forwards;
+}
+
+@keyframes darken {
+  0% {
+    filter: brightness(1);
+    background-color: inherit;
   }
-  to {
-    width: 100vw;
+  100% {
+    filter: brightness(0);
+    background-color: #000;
   }
+}
+
+.feature .overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(0, 0, 0, 0.7);
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  opacity: 0;
+  transition: opacity 0.3s ease-in-out;
+  pointer-events: none;
+}
+
+.feature.hovered .overlay {
+  opacity: 1;
+}
+
+.feature h2 {
+  color: white;
+  opacity: 0;
+  transform: translateY(50px);
+  transition: all 0.6s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+  margin-bottom: 20px;
+  font-size: 2.5em;
+}
+
+.feature-content {
+  opacity: 0;
+  transform: translateY(50px);
+  transition: all 0.6s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+.feature-list {
+  list-style: none;
+  padding: 0;
+}
+
+.feature-list li {
+  color: white;
+  margin: 15px 0;
+  opacity: 0;
+  transform: translateY(50px);
+  transition: all 0.6s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+.feature.hovered h2 {
+  opacity: 1;
+  transform: translateY(0);
+  transition-delay: 0.1s;
+}
+
+.feature.hovered .main-desc {
+  opacity: 1;
+  transform: translateY(0);
+  transition-delay: 0.2s;
+}
+
+.feature.hovered .feature-content {
+  opacity: 1;
+  transform: translateY(0);
+  transition-delay: 0.3s;
+}
+
+.feature.hovered .feature-list li:nth-child(1) {
+  opacity: 1;
+  transform: translateY(0);
+  transition-delay: 0.4s;
+}
+
+.feature.hovered .feature-list li:nth-child(2) {
+  opacity: 1;
+  transform: translateY(0);
+  transition-delay: 0.5s;
+}
+
+.feature.hovered .feature-list li:nth-child(3) {
+  opacity: 1;
+  transform: translateY(0);
+  transition-delay: 0.6s;
+}
+
+.main-desc {
+  color: white;
+  margin: 20px 0;
+  font-size: 1.2em;
+  opacity: 0;
+  transform: translateY(50px);
+  transition: all 0.6s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+.feature.hovered .main-desc {
+  opacity: 1;
+  transform: translateY(0);
+  transition-delay: 0.3s;
 }
 </style>
