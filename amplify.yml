@@ -17,5 +17,5 @@ frontend:
   redirects:
     - source: '/api/<*>'
       target: 'https://gidhnf5qp4.execute-api.us-west-2.amazonaws.com/dev/<*>'
-      status: '301'
+      status: '200' 
       condition: null
