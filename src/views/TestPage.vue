@@ -210,8 +210,6 @@
             method: 'POST',
             headers: {
               'Content-Type': 'application/json',
-              'mode' : 'no-cors',
-              'Access-Control-Allow-Origin': '*'
             },
             body: JSON.stringify({
               gender: this.formData.gender,
