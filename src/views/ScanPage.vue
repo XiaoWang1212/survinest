@@ -1,10 +1,9 @@
 <template>
-  <div class="scan-page" :class="{ 'transitioning': isTransitioning }">
+  <div class="scan-page" :class="{ 'slide-out': isSliding }">
     <div class="switch-container">
-      <input type="checkbox" id="switch" class="switch-checkbox" @change="switchToKit">
-      <label for="switch" class="switch-label" title="切換到防災包功能">
-        <span class="switch-button"></span>
-      </label>
+      <button class="kit-button" @click="switchToKit" title="切換到防災包功能">
+        <img src="@/assets/photo/bag.jpg" alt="防災包" class="button-image">
+      </button>
     </div>
     <SafetyScan />
 
@@ -51,7 +50,7 @@
 </template>
 
 <script>
-import { ref, computed } from 'vue'; // 添加 computed 的導入
+import { ref, computed, onMounted } from 'vue';
 import { useRouter } from 'vue-router';
 import SafetyScan from '@/components/SafetyScan.vue';
 
@@ -63,49 +62,77 @@ export default {
   setup() {
     const router = useRouter();
     const isTransitioning = ref(false);
+    const isSliding = ref(false);
     const uploadedImage = ref(null);
     const analysisResult = ref(null);
 
-    const switchToKit = async () => {
+    const switchToKit = () => {
+      if (isTransitioning.value) return;
+      
       isTransitioning.value = true;
-      await new Promise((resolve) => setTimeout(resolve, 500));
-      router.push({ name: 'SurvivalKitPage' });
+      isSliding.value = true;
+      
+      // 設置動畫結束時的事件處理
+      setTimeout(() => {
+        router.push({ name: 'SurvivalKitPage' });
+        // 導航後重設狀態
+        isTransitioning.value = false;
+        isSliding.value = false;
+      }, 500); // 500ms 應該與 CSS 動畫時間相符
+    };
+
+    const scrollToResult = () => {
+      const resultSection = document.querySelector('.analysis-result');
+      if (resultSection) {
+        const topOffset = 30;
+        window.scrollTo({
+          top: resultSection.offsetTop - topOffset,
+          behavior: 'smooth'
+        });
+      }
     };
 
     const analyzeImage = () => {
-      analysisResult.value =
-        '掃描完成：此地區安全風險評級為中等。建議查看避難路線和躲避位置。';
+      analysisResult.value = '掃描完成：此地區安全風險評級為中等。建議查看避難路線和躲避位置。';
+      scrollToResult();
     };
 
     const showEvacuationRoute = () => {
-      analysisResult.value =
-        '避難路線已標示：請沿著綠色箭頭方向前進至最近的安全區域。';
+      analysisResult.value = '避難路線已標示：請沿著綠色箭頭方向前進至最近的安全區域。';
+      scrollToResult();
     };
 
     const showHidingSpots = () => {
-      analysisResult.value =
-        '躲避位置已標示：藍色區域表示適合躲避的安全位置。';
+      analysisResult.value = '躲避位置已標示：藍色區域表示適合躲避的安全位置。';
+      scrollToResult();
     };
 
     const showSurvivalKitLocation = () => {
-      analysisResult.value =
-        '防災包建議放置位置：紅色標記處為建議放置防災包的位置。';
+      analysisResult.value = '防災包建議放置位置：紅色標記處為建議放置防災包的位置。';
+      scrollToResult();
     };
 
     // 計算屬性：根據分析結果設置底色類名
     const resultColorClass = computed(() => {
       if (analysisResult.value?.includes('避難路線')) {
-        return 'green'; // 綠色背景
+        return 'green';
       } else if (analysisResult.value?.includes('躲避位置')) {
-        return 'yellow'; // 黃色背景
+        return 'yellow';
       } else if (analysisResult.value?.includes('防災包')) {
-        return 'blue'; // 紅色背景
+        return 'blue';
       }
-      return ''; // 默認無背景
+      return '';
+    });
+
+    // 確保組件加載完成後初始化
+    onMounted(() => {
+      // 這裡可以添加任何需要在組件掛載後執行的初始化代碼
+      console.log('ScanPage component mounted');
     });
 
     return {
       isTransitioning,
+      isSliding,
       switchToKit,
       uploadedImage,
       analyzeImage,
@@ -114,22 +141,30 @@ export default {
       showSurvivalKitLocation,
       analysisResult,
       resultColorClass,
+      scrollToResult,
     };
   },
 };
 </script>
+
 <style scoped>
 body {
-  overflow-x: hidden; /* 禁止水平滾動 */
+  overflow-x: hidden;
 }
 
 .scan-page {
   min-height: 100vh;
-  background-color: rgba(255, 165, 0, 0.1); /* 淺橙色，透明度 10% */
+  background-color: rgba(255, 165, 0, 0.1);
   position: relative;
+  padding-bottom: 50px;
+  overflow-x: hidden;
   transition: transform 0.5s ease;
-  padding-bottom: 50px; /* 增加下方空間 */
-  overflow-x: hidden; /* 禁止水平滾動 */
+  padding-top: 35px; /* 添加頂部內邊距 */
+}
+
+/* 滑動動畫樣式 */
+.scan-page.slide-out {
+  transform: translateX(100%);
 }
 
 .switch-container {
@@ -139,43 +174,38 @@ body {
   z-index: 1000;
 }
 
-.switch-checkbox {
-  display: none; /* 隱藏 checkbox */
-}
-
-.switch-label {
-  display: block;
-  width: 60px;
-  height: 30px;
-  background: #e0e0e0;
-  border-radius: 15px;
-  position: relative;
-  cursor: pointer;
-  transition: all 0.3s ease;
-}
-
-.switch-label:hover {
-  background: #d0d0d0;
-}
-
-.switch-button {
-  position: absolute;
-  top: 2px;
-  left: 2px;
-  width: 26px;
-  height: 26px;
+.kit-button {
+  width: 70px;
+  height: 70px;
   border-radius: 50%;
-  background: #fff;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+  border: 2px solid rgba(0, 0, 0, 0.15);
+  background-color: #ffffff;
+  cursor: pointer;
+  padding: 12px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
   transition: all 0.3s ease;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15);
+  z-index: 10;
 }
 
-.switch-checkbox:checked + .switch-label {
-  background: #2196F3;
+.kit-button:hover {
+  transform: scale(1.05);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+  background-color: #f8f8f8;
 }
 
-.switch-checkbox:checked + .switch-label .switch-button {
-  transform: translateX(30px);
+.kit-button:active {
+  transform: scale(0.95);
+}
+
+.button-image {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  border-radius: 0;
+  pointer-events: none; /* 確保點擊穿透到按鈕 */
 }
 
 .results-section {
@@ -187,25 +217,26 @@ body {
 }
 
 .analysis-result {
-  width: 800px; /* 與結果圖的寬度一致 */
-  max-width: 90%; /* 確保在小螢幕上不會超出容器 */
-  margin: 0 0 20px 0;
+  width: 800px;
+  max-width: 90%;
+  margin: 20px 0;
   padding: 15px;
   background-color: #f8f8f8;
   border-radius: 8px;
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  scroll-margin-top: 80px;
 }
 
 .analysis-result.blue {
-  background-color: #bad9e4; /* 紅色背景 */
+  background-color: #bad9e4;
 }
 
 .analysis-result.yellow {
-  background-color: #f5eebc; /* 黃色背景 */
+  background-color: #f5eebc;
 }
 
 .analysis-result.green {
-  background-color: #c6e3c6; /* 綠色背景 */
+  background-color: #c6e3c6;
 }
 
 .analysis-result h3 {
@@ -214,96 +245,101 @@ body {
 }
 
 .result-container {
-  display: flex; /* 水平排列 */
-  justify-content: center; /* 水平置中 */
-  align-items: center; /* 垂直置中 */
-  gap: 20px; /* 結果圖與按鈕之間的間距 */
-  max-width: 800px; /* 與分析結果的寬度一致 */
-  margin: 0 auto; /* 在容器中居中 */
-}
-
-/* 結果圖樣式 */
-.result-image {
-  width: 800px; /* 與分析結果的寬度一致 */
-  max-width: 90%; /* 確保在小螢幕上不會超出容器 */
-  height: 500px; /* 固定高度 */
-  padding: 15px; /* 與分析結果的內邊距一致 */
-  background-color: #ffffff; /* 白色背景 */
-  border: 2px dashed #ddd; /* 與分析結果的邊框樣式一致 */
-  border-radius: 8px; /* 圓角與分析結果一致 */
   display: flex;
   justify-content: center;
   align-items: center;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1); /* 添加淺陰影增強視覺效果 */
-  text-align: center; /* 確保內容居中 */
+  gap: 20px;
+  max-width: 800px;
+  margin: 0 auto;
 }
 
+.result-image {
+  width: 800px;
+  max-width: 90%;
+  height: 500px;
+  padding: 15px;
+  background-color: #ffffff;
+  border: 2px dashed #ddd;
+  border-radius: 8px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  text-align: center;
+}
 
-/* 圖標按鈕組垂直排列在右側 */
 .icon-buttons-container {
   display: flex;
-  flex-direction: column; /* 按鈕垂直排列 */
-  gap: 15px; /* 按鈕之間的間距 */
-  justify-content: center; /* 垂直居中 */
-  align-items: center; /* 水平居中 */
-  flex-shrink: 0; /* 防止按鈕區域被壓縮 */
+  flex-direction: column;
+  gap: 15px;
+  justify-content: center;
+  align-items: center;
+  flex-shrink: 0;
 }
+
 .icon-button-group {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 3px; /* 圖片與文字之間的間距 */
+  gap: 3px;
 }
 
 .icon-button {
   width: 60px;
   height: 60px;
-  background-color: transparent; /* 透明背景 */
-  border-radius: 50%; /* 圓形按鈕 */
+  background-color: #ffffff;
+  border: 1px solid rgba(0, 0, 0, 0.1);
+  border-radius: 50%;
   cursor: pointer;
   display: flex;
   justify-content: center;
   align-items: center;
   transition: all 0.2s ease;
-  padding: 0; /* 移除內邊距，以便圖片能完全填充按鈕 */
-  overflow: hidden; /* 確保圖片不會溢出圓形邊框 */
+  padding: 8px; /* 減少內邊距，讓圖片可以更大 */
+  z-index: 5;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
 }
-
 .icon-image {
-  width: 100%; /* 填滿按鈕 */
-  height: 100%; /* 填滿按鈕 */
-  object-fit: cover; /* 確保圖片覆蓋整個按鈕區域 */
+  width: 90%; /* 增加圖片尺寸 */
+  height: 90%; /* 增加圖片尺寸 */
+  object-fit: contain; /* 使用 contain 確保圖片完整顯示 */
+  border-radius: 50%;
+  background-color: #ffffff;
 }
 
 .icon-button:hover {
-  background-color: rgba(93, 64, 55, 0.1); /* 淺棕色半透明懸停效果 */
   transform: scale(1.1);
+  box-shadow: 0 3px 6px rgba(0, 0, 0, 0.15);
+}
+
+.icon-button:active {
+  transform: scale(0.95);
 }
 
 .button-label {
-  font-size: 14px; /* 調整文字大小 */
+  font-size: 14px;
   font-weight: bold;
-  color: #5D4037; /* 深咖啡色文字 */
+  color: #5D4037;
   text-align: center;
-  margin-top: 5px; /* 與按鈕的間距 */
+  margin-top: 5px;
 }
 
 /* 響應式調整 */
 @media (max-width: 1024px) {
   .result-container {
-    flex-direction: column; /* 在小螢幕上改為垂直排列 */
+    flex-direction: column;
     align-items: center;
   }
   
   .result-image {
-    width: 90%; /* 在小螢幕上寬度增加 */
+    width: 90%;
     max-width: 100%;
-    height: auto; /* 小螢幕上高度自適應 */
-    min-height: 300px; /* 最小高度 */
+    height: auto;
+    min-height: 300px;
   }
   
   .icon-buttons-container {
-    flex-direction: row; /* 在小螢幕上按鈕改為水平排列 */
+    flex-direction: row;
     margin-top: 20px;
     gap: 15px;
     width: 90%;
