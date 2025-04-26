@@ -324,26 +324,112 @@ body {
   margin-top: 5px;
 }
 
-/* 響應式調整 */
-@media (max-width: 1024px) {
+
+/* 先清理重複的媒體查詢，整合成一個統一的版本 */
+
+@media (max-width: 1200px) {
+  .result-container {
+    width: 100%;
+    max-width: none;
+    padding: 0 20px;
+  }
+
+  .result-image {
+    width: 100%;
+    height: 500px;
+  }
+}
+
+@media (max-width: 992px) {
   .result-container {
     flex-direction: column;
     align-items: center;
+    padding: 0 15px;
   }
   
   .result-image {
-    width: 90%;
-    max-width: 100%;
-    height: auto;
-    min-height: 300px;
+    width: 100%;
+    height: 450px;
+    margin-bottom: 20px;
   }
-  
+
   .icon-buttons-container {
     flex-direction: row;
+    width: 100%;
+    justify-content: space-between;
+    padding: 0;
     margin-top: 20px;
-    gap: 15px;
-    width: 90%;
-    justify-content: space-around;
+  }
+
+  .icon-button-group {
+    flex: 1;
+    margin: 0 5px;
+  }
+
+  .analysis-result {
+    width: 100%;
+    max-width: none;
+    margin: 15px;
+  }
+}
+
+@media (max-width: 768px) {
+  .scan-page {
+    padding: 60px 10px 20px;
+  }
+
+  .result-image {
+    height: 400px;
+  }
+
+  .icon-button {
+    width: 50px;
+    height: 50px;
+  }
+
+  .button-label {
+    font-size: 12px;
+  }
+}
+
+@media (max-width: 576px) {
+  .scan-page {
+    padding: 50px 5px 20px;
+  }
+
+  .result-container {
+    padding: 0 5px;
+  }
+
+  .result-image {
+    width: calc(100% + 20px); /* 讓圖片比容器寬 */
+    margin-left: -10px;
+    margin-right: -10px;
+    height: 350px;
+    border-radius: 0;
+  }
+
+  .icon-buttons-container {
+    width: 100%;
+    gap: 5px;
+    padding: 0 5px;
+  }
+
+  .icon-button {
+    width: 45px;
+    height: 45px;
+  }
+
+  .button-label {
+    font-size: 11px;
+    margin-top: 3px;
+  }
+
+  .analysis-result {
+    width: calc(100% + 20px);
+    margin: 15px -10px;
+    border-radius: 0;
+    padding: 15px 10px;
   }
 }
 </style>
