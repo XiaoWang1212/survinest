@@ -1,5 +1,6 @@
 <template>
-  <div class="supply-list">
+  <!-- 中文版本 -->
+  <div class="supply-list" v-if="currentLanguage === 'zh'">
     <div class="supply-header">
       <h1>防災物資清單</h1>
       <p class="subtitle">選擇並儲存您的防災物資</p>
@@ -44,7 +45,7 @@
         </div>
       </div>
 
-      <!-- 食物需求分析 - 直接顯示在下方 -->
+      <!-- 食物需求分析 -->
       <div class="food-analysis">
         <h2>食物需求分析</h2>
         <p>上傳照片並輸入您的資訊，系統將根據現有物資提供每日食物分配建議。</p>
@@ -106,7 +107,7 @@
           </p>
 
           <div class="suggestion-card">
-            <!-- 添加 BMR 和 TDEE 顯示 -->
+            <!-- BMR 和 TDEE 顯示 -->
             <div class="metabolism-info">
               <div class="info-item">
                 <div class="info-label">基礎代謝率 (BMR):</div>
@@ -236,6 +237,246 @@
     </div>
 
     <button class="save-button" @click="saveChecklist">儲存清單</button>
+  </div>
+
+  <!-- 英文版本 -->
+  <div class="supply-list" v-else>
+    <div class="supply-header">
+      <h1>Emergency Supply List</h1>
+      <p class="subtitle">Select and save your emergency supplies</p>
+    </div>
+
+    <!-- 類別切換按鈕 - 英文 -->
+    <div class="category-tabs">
+      <button
+        :class="['tab-button', { active: activeCategory === 'food' }]"
+        @click="activeCategory = 'food'"
+      >
+        Food
+      </button>
+      <button
+        :class="['tab-button', { active: activeCategory === 'supplies' }]"
+        @click="activeCategory = 'supplies'"
+      >
+        Supplies
+      </button>
+    </div>
+
+    <!-- 食物區塊 - 英文 -->
+    <div v-if="activeCategory === 'food'" class="food-section">
+      <!-- 食物清單 -->
+      <div class="food-items">
+        <h2>Food List</h2>
+        <div
+          v-for="item in suppliesByCategoryEn.food"
+          :key="item.id"
+          class="list-item"
+        >
+          <label class="checkbox-label">
+            <input type="checkbox" v-model="checkedItems[item.id]" />
+            <div class="item-content">
+              <h3>{{ item.name }}</h3>
+              <p class="item-description">{{ item.description }}</p>
+              <span class="priority-tag" :class="'priority-' + item.priority">
+                {{ priorityLabelsEn[item.priority] }}
+              </span>
+            </div>
+          </label>
+        </div>
+      </div>
+
+      <!-- 食物需求分析 - 英文 -->
+      <div class="food-analysis">
+        <h2>Food Requirements Analysis</h2>
+        <p>Upload a photo and enter your information. The system will provide daily food distribution recommendations based on available supplies.</p>
+
+        <!-- 上傳照片 -->
+        <div class="upload-section">
+          <h3>Upload Photo</h3>
+          <p class="hint-text">Take a photo of your current food items</p>
+          <input
+            type="file"
+            @change="handleFileUpload"
+            accept="image/*"
+            class="file-input"
+          />
+          <div v-if="uploadedImage" class="uploaded-image">
+            <img :src="uploadedImage" alt="Uploaded photo" />
+          </div>
+        </div>
+
+        <!-- 輸入使用者資訊 - 英文 -->
+        <div class="user-info-section">
+          <h3>Enter Your Information</h3>
+          <div class="form-group">
+            <label>Age:</label>
+            <input type="number" v-model="userInfo.age" min="0" />
+          </div>
+
+          <div class="form-group">
+            <label>Gender:</label>
+            <select v-model="userInfo.gender">
+              <option value="male">Male</option>
+              <option value="female">Female</option>
+            </select>
+          </div>
+
+          <div class="form-group">
+            <label>Height (cm):</label>
+            <input type="number" v-model="userInfo.height" min="0" />
+          </div>
+
+          <div class="form-group">
+            <label>Weight (kg):</label>
+            <input type="number" v-model="userInfo.weight" min="0" />
+          </div>
+
+          <button @click="calculateSuggestions" class="calculate-button">
+            Calculate Recommendation
+          </button>
+        </div>
+
+        <!-- 顯示建議 - 英文 -->
+        <div v-if="suggestions" class="suggestions-section">
+          <h3>Daily Dietary Recommendations</h3>
+          <p
+            v-if="suggestions && Object.keys(suggestions).length > 0"
+            class="success-message"
+          >
+            Calculation successful! Below is your personalized dietary recommendation
+          </p>
+
+          <div class="suggestion-card">
+            <!-- BMR 和 TDEE 顯示 - 英文 -->
+            <div class="metabolism-info">
+              <div class="info-item">
+                <div class="info-label">Basal Metabolic Rate (BMR):</div>
+                <div class="info-value">{{ suggestions.bmr }} kcal/day</div>
+              </div>
+              <div class="info-item">
+                <div class="info-label">Total Daily Energy Expenditure (TDEE):</div>
+                <div class="info-value">{{ suggestions.tdee }} kcal/day</div>
+              </div>
+            </div>
+
+            <p class="calories">
+              Recommended calories per meal: <span>{{ suggestions.caloriesPerMeal }}</span> kcal
+            </p>
+            <button @click="analyzeNutrition" class="analyze-button">
+              Analyze Nutritional Needs
+            </button>
+            <div v-if="nutritionAnalysis" class="nutrition-analysis-section">
+              <p>Daily Food Distribution:</p>
+              <h3>Disaster Period Nutritional Analysis</h3>
+              <div class="analysis-card">
+                <div v-if="nutritionAnalysis.loading" class="loading-container">
+                  <div class="loading-spinner"></div>
+                  <p>Analyzing nutritional requirements...</p>
+                </div>
+                <div v-else class="nutrition-content">
+                  <p class="instruction-title">
+                    Recommended foods to store to meet nutritional needs:
+                  </p>
+                  <div
+                    class="nutrition-text"
+                    v-html="formattedNutritionTextEn"
+                  ></div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 用品清單 - 英文 -->
+    <div v-else class="supply-categories">
+      <!-- 保暖衣物 - 英文 -->
+      <div class="category">
+        <h2>Warm Clothing</h2>
+        <div
+          v-for="item in suppliesByCategoryEn.clothing"
+          :key="item.id"
+          class="list-item"
+        >
+          <label class="checkbox-label">
+            <input type="checkbox" v-model="checkedItems[item.id]" />
+            <div class="item-content">
+              <h3>{{ item.name }}</h3>
+              <p class="item-description">{{ item.description }}</p>
+              <span class="priority-tag" :class="'priority-' + item.priority">
+                {{ priorityLabelsEn[item.priority] }}
+              </span>
+            </div>
+          </label>
+        </div>
+      </div>
+
+      <!-- 個人醫藥用品 - 英文 -->
+      <div class="category">
+        <h2>Personal Medical Supplies</h2>
+        <div
+          v-for="item in suppliesByCategoryEn.medical"
+          :key="item.id"
+          class="list-item"
+        >
+          <label class="checkbox-label">
+            <input type="checkbox" v-model="checkedItems[item.id]" />
+            <div class="item-content">
+              <h3>{{ item.name }}</h3>
+              <p class="item-description">{{ item.description }}</p>
+              <span class="priority-tag" :class="'priority-' + item.priority">
+                {{ priorityLabelsEn[item.priority] }}
+              </span>
+            </div>
+          </label>
+        </div>
+      </div>
+
+      <!-- 重要物品 - 英文 -->
+      <div class="category">
+        <h2>Important Items</h2>
+        <div
+          v-for="item in suppliesByCategoryEn.important"
+          :key="item.id"
+          class="list-item"
+        >
+          <label class="checkbox-label">
+            <input type="checkbox" v-model="checkedItems[item.id]" />
+            <div class="item-content">
+              <h3>{{ item.name }}</h3>
+              <p class="item-description">{{ item.description }}</p>
+              <span class="priority-tag" :class="'priority-' + item.priority">
+                {{ priorityLabelsEn[item.priority] }}
+              </span>
+            </div>
+          </label>
+        </div>
+      </div>
+
+      <!-- 其他工具類 - 英文 -->
+      <div class="category">
+        <h2>Other Tools</h2>
+        <div
+          v-for="item in suppliesByCategoryEn.tools"
+          :key="item.id"
+          class="list-item"
+        >
+          <label class="checkbox-label">
+            <input type="checkbox" v-model="checkedItems[item.id]" />
+            <div class="item-content">
+              <h3>{{ item.name }}</h3>
+              <p class="item-description">{{ item.description }}</p>
+              <span class="priority-tag" :class="'priority-' + item.priority">
+                {{ priorityLabelsEn[item.priority] }}
+              </span>
+            </div>
+          </label>
+        </div>
+      </div>
+    </div>
+
+    <button class="save-button" @click="saveChecklist">Save List</button>
   </div>
 </template>
 
