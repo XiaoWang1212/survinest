@@ -1,6 +1,11 @@
 <template>
   <div class="survival-kit-page" :class="{ 'transitioning': isTransitioning }">
     <!-- 人數輸入彈窗 -->
+    <div class="switch-container">
+      <button class="scan-button" @click="switchToScan" title="切換到安全掃描功能">
+        <img src="@/assets/photo/home.jpg" alt="掃描" class="button-image">
+      </button>
+    </div>
     <div v-if="showPeopleInput" class="people-input-overlay">
       <div class="people-input-modal">
         <h2>請輸入家中人數</h2>
@@ -16,18 +21,6 @@
 
     <!-- 防災包內容 -->
     <div v-else>
-      <div class="switch-container">
-        <input
-          type="checkbox"
-          id="kitSwitch"
-          class="switch-checkbox"
-          @change="switchToScan"
-          checked
-        />
-        <label for="kitSwitch" class="switch-label" title="切換到安全掃描功能">
-          <span class="switch-button"></span>
-        </label>
-      </div>
 
       <!-- 防災包標題與描述 -->
       <div class="kit-header">
@@ -68,11 +61,18 @@ export default {
       }
     }
 
-    const switchToScan = async () => {
-      isTransitioning.value = true
-      await new Promise(resolve => setTimeout(resolve, 500))
-      router.push({ name: 'ScanPage' })
-    }
+    const switchToScan = () => {
+      if (isTransitioning.value) return;
+
+      isTransitioning.value = true;
+
+      // 設置動畫結束時的事件處理
+      setTimeout(() => {
+        router.push({ name: 'ScanPage' });
+        // 導航後重設狀態
+        isTransitioning.value = false;
+      }, 500); // 改為 500ms 與 CSS 動畫時間相符
+    };
 
     return {
       isTransitioning,
@@ -90,7 +90,10 @@ export default {
   background: #C7E1DC;
   min-height: 100vh;
   padding: 20px;
-  transition: all 0.3s ease;
+  position: relative;
+  overflow-x: hidden;
+  transition: transform 0.5s ease;
+  transform: translateX(0); /* 初始位置 */
 }
 
 .people-input-overlay {
@@ -165,6 +168,51 @@ export default {
   line-height: 1.8;
 }
 
+.switch-container {
+  position: fixed;
+  top: 20px;
+  right: 20px;
+  z-index: 1000;
+}
+
+.scan-button {
+  width: 70px;
+  height: 70px;
+  border-radius: 50%;
+  border: 2px solid rgba(0, 0, 0, 0.15);
+  background-color: #ffffff;
+  cursor: pointer;
+  padding: 12px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  transition: all 0.3s ease;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15);
+  z-index: 10;
+}
+
+.scan-button:hover {
+  transform: scale(1.05);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+  background-color: #f8f8f8;
+}
+
+.scan-button:active {
+  transform: scale(0.95);
+}
+
+.button-image {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  border-radius: 0;
+  pointer-events: none; /* 確保點擊穿透到按鈕 */
+}
+.transitioning {
+  transform: translateX(-100%); /* 改為水平滑動 */
+  opacity: 1;
+}
+
 /* 新增的響應式設計部分 */
 @media (max-width: 768px) {
   .kit-header h1 {
@@ -203,14 +251,21 @@ export default {
     font-size: 0.9rem;
   }
 }
-
-/* 添加過渡效果 */
-.transitioning {
-  opacity: 0;
-  transform: translateY(20px);
+@media (max-width: 768px) {
+  .scan-button {
+    width: 60px;
+    height: 60px;
+    padding: 10px;
+  }
 }
 
-/* 添加到 SurvivalKitPage.vue 的 style 部分 */
+@media (max-width: 576px) {
+  .scan-button {
+    width: 50px;
+    height: 50px;
+    padding: 8px;
+  }
+}
 
 /* 已有的按鈕樣式 */
 .people-input-modal button {
