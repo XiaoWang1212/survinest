@@ -1,5 +1,21 @@
 <template>
-  <div class="survival-kit-page" :class="{ 'transitioning': isTransitioning }">
+  <div class="language-toggle">
+    <button 
+      @click="currentLanguage = 'zh'" 
+      :class="{ active: currentLanguage === 'zh' }"
+    >
+      繁體中文
+    </button>
+    <button 
+      @click="currentLanguage = 'en'" 
+      :class="{ active: currentLanguage === 'en' }"
+    >
+      English
+    </button>
+  </div>
+
+  <!-- 中文版本 -->
+  <div class="survival-kit-page" :class="{ 'transitioning': isTransitioning }" v-if="currentLanguage === 'zh'">
     <!-- 人數輸入彈窗 -->
     <div class="switch-container">
       <button class="scan-button" @click="switchToScan" title="切換到安全掃描功能">
@@ -33,10 +49,46 @@
       <SupplyList />
     </div>
   </div>
+
+  <!-- 英文版本 -->
+  <div class="survival-kit-page" :class="{ 'transitioning': isTransitioning }" v-else>
+    <!-- 人數輸入彈窗 -->
+    <div class="switch-container">
+      <button class="scan-button" @click="switchToScan" title="Switch to Safety Scan">
+        <img src="@/assets/photo/home.jpg" alt="Scan" class="button-image">
+      </button>
+    </div>
+    <div v-if="showPeopleInput" class="people-input-overlay">
+      <div class="people-input-modal">
+        <h2>Please enter the number of people in your household</h2>
+        <input
+          type="number"
+          v-model="peopleCount"
+          min="1"
+          placeholder="Enter number"
+        />
+        <button @click="confirmPeopleCount">Confirm</button>
+      </div>
+    </div>
+
+    <!-- 防災包內容 -->
+    <div v-else>
+
+      <!-- 防災包標題與描述 -->
+      <div class="kit-header">
+        <h1>Emergency Kit & Supplies Management</h1>
+        <p>Here you'll find recommended emergency supplies to help you better prepare for disasters.</p>
+      </div>
+
+      <!-- 防災物資清單 -->
+      <SurvivalPlan />
+      <SupplyList />
+    </div>
+  </div>
 </template>
 
 <script>
-import { ref } from 'vue'
+import { ref, onMounted, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import SurvivalPlan from '@/components/SurvivalPlan.vue'
 import SupplyList from '@/components/SupplyList.vue'
@@ -52,12 +104,35 @@ export default {
     const isTransitioning = ref(false)
     const showPeopleInput = ref(true) // 控制是否顯示人數輸入彈窗
     const peopleCount = ref(1) // 儲存輸入的人數
+    
+    // 語言控制
+    const currentLanguage = ref(localStorage.getItem('preferredLanguage') === 'English' ? 'en' : 'zh')
+
+    // 在組件掛載後載入語言偏好
+    onMounted(() => {
+      // 載入用戶偏好的語言
+      const savedLanguage = localStorage.getItem('preferredLanguage')
+      if (savedLanguage === 'English') {
+        currentLanguage.value = 'en'
+      } else {
+        currentLanguage.value = 'zh'
+      }
+    })
+    
+    // 監聽語言變化
+    watch(currentLanguage, (newVal) => {
+      localStorage.setItem('preferredLanguage', newVal === 'zh' ? '繁體中文' : 'English')
+    })
 
     const confirmPeopleCount = () => {
       if (peopleCount.value > 0) {
         showPeopleInput.value = false // 隱藏彈窗
       } else {
-        alert('請輸入有效的人數！')
+        if (currentLanguage.value === 'zh') {
+          alert('請輸入有效的人數！')
+        } else {
+          alert('Please enter a valid number!')
+        }
       }
     }
 
@@ -79,13 +154,44 @@ export default {
       showPeopleInput,
       peopleCount,
       confirmPeopleCount,
-      switchToScan
+      switchToScan,
+      currentLanguage
     }
   }
 }
 </script>
 
 <style scoped>
+.language-toggle {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  margin-bottom: 10px;
+  padding: 10px 20px;
+  margin-top: 70px; /* 新增這行，往下移動 */
+  position: relative; /* 新增這行，確保定位正確 */
+  z-index: 1001; /* 確保在彈窗之上 */
+}
+
+.language-toggle button {
+  padding: 8px 15px;
+  border: 1px solid #ddd;
+  background-color: white;
+  border-radius: 20px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.language-toggle button.active {
+  background-color: #56A59B;
+  color: white;
+  border-color: #56A59B;
+}
+
+.language-toggle button:hover:not(.active) {
+  background-color: #f0f0f0;
+}
+
 .survival-kit-page {
   background: #C7E1DC;
   min-height: 100vh;

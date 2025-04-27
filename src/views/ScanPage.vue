@@ -1,5 +1,21 @@
 <template>
-  <Transition name="fade-in">
+  <div class="language-toggle">
+    <button 
+      @click="currentLanguage = 'zh'" 
+      :class="{ active: currentLanguage === 'zh' }"
+    >
+      繁體中文
+    </button>
+    <button 
+      @click="currentLanguage = 'en'" 
+      :class="{ active: currentLanguage === 'en' }"
+    >
+      English
+    </button>
+  </div>
+  
+  <!-- 中文版本 -->
+  <Transition name="fade-in" v-if="currentLanguage === 'zh'">
     <div class="scan-page" :class="{ 'slide-out': isSliding }">
       <!-- 頂部導航按鈕 -->
       <div class="switch-container">
@@ -22,10 +38,67 @@
       </div>
     </div>
   </Transition>
+  
+  <!-- 英文版本 -->
+  <Transition name="fade-in" v-else>
+    <div class="scan-page" :class="{ 'slide-out': isSliding }">
+      <!-- 頂部導航按鈕 -->
+      <div class="switch-container">
+        <button class="kit-button" @click="switchToKit" title="Switch to Emergency Kit">
+          <img src="@/assets/photo/bag.jpg" alt="Emergency Kit" class="button-image">
+        </button>
+      </div>
+      
+      <!-- 掃描元件 -->
+      <SafetyScan />
+
+      <!-- 分析結果區域 -->
+      <div class="results-section">
+        <Transition name="result-fade">
+          <div class="analysis-result" :class="resultColorClass" v-if="analysisResultEn">
+            <h3>Analysis Result:</h3>
+            <p>{{ analysisResultEn }}</p>
+          </div>
+        </Transition>
+        
+        <!-- 結果圖與按鈕並排顯示 -->
+        <div class="result-container">
+          <!-- 結果圖 -->
+          <div class="result-image">
+            <p>Result Image Here</p>
+          </div>
+
+          <!-- 圖標按鈕組 -->
+          <div class="icon-buttons-container">
+            <div class="icon-button-group" :style="`animation-delay: ${0.3}s`">
+              <button class="icon-button" @click="showEvacuationRoute" title="Evacuation Route">
+                <img src="@/assets/photo/run.png" alt="Evacuation Route" class="icon-image" />
+              </button>
+              <div class="button-label">Evacuation</div>
+            </div>
+
+            <div class="icon-button-group" :style="`animation-delay: ${0.5}s`">
+              <button class="icon-button" @click="showHidingSpots" title="Hiding Spots">
+                <img src="@/assets/photo/hide.png" alt="Hiding Spots" class="icon-image" />
+              </button>
+              <div class="button-label">Hiding Spots</div>
+            </div>
+
+            <div class="icon-button-group" :style="`animation-delay: ${0.7}s`">
+              <button class="icon-button" @click="showSurvivalKitLocation" title="Kit Placement">
+                <img src="@/assets/photo/kit.png" alt="Kit Placement Location" class="icon-image" />
+              </button>
+              <div class="button-label">Kit Location</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </Transition>
 </template>
 
 <script>
-import { ref, computed, onMounted } from 'vue';
+import { ref, computed, onMounted, watch } from 'vue';
 import { useRouter } from 'vue-router';
 import SafetyScan from '@/components/SafetyScan.vue';
 
@@ -40,21 +113,65 @@ export default {
     const isSliding = ref(false);
     const uploadedImage = ref(null);
     const analysisResult = ref(null);
+    const analysisResultEn = ref(null);
     const pageLoaded = ref(false);
+    
+    // 語言控制
+    const currentLanguage = ref(localStorage.getItem('preferredLanguage') === 'English' ? 'en' : 'zh');
 
     // 在組件掛載後觸發進入動畫
     onMounted(() => {
+      // 載入用戶偏好的語言
+      const savedLanguage = localStorage.getItem('preferredLanguage');
+      if (savedLanguage === 'English') {
+        currentLanguage.value = 'en';
+      } else {
+        currentLanguage.value = 'zh';
+      }
+      
       // 給一個短暫的延遲，確保 DOM 完全渲染
       setTimeout(() => {
         pageLoaded.value = true;
         
         // 自動顯示初始分析結果，但延遲顯示以讓頁面先載入
         setTimeout(() => {
-          analysisResult.value = '掃描完成：此地區安全風險評級為中等。建議查看避難路線和躲避位置。';
+          if(currentLanguage.value === 'zh') {
+            analysisResult.value = '掃描完成：此地區安全風險評級為中等。建議查看避難路線和躲避位置。';
+          } else {
+            analysisResultEn.value = 'Scan complete: Safety risk level for this area is moderate. Recommend checking evacuation routes and hiding spots.';
+          }
         }, 1200);
       }, 100);
       
       console.log('ScanPage component mounted');
+    });
+    
+    // 監聽語言變化
+    watch(currentLanguage, (newVal) => {
+      localStorage.setItem('preferredLanguage', newVal === 'zh' ? '繁體中文' : 'English');
+      
+      // 更新對應語言的分析結果
+      if(newVal === 'zh') {
+        if(analysisResultEn.value?.includes('evacuation')) {
+          analysisResult.value = '避難路線已標示：請沿著綠色箭頭方向前進至最近的安全區域。';
+        } else if(analysisResultEn.value?.includes('hiding')) {
+          analysisResult.value = '躲避位置已標示：藍色區域表示適合躲避的安全位置。';
+        } else if(analysisResultEn.value?.includes('kit')) {
+          analysisResult.value = '防災包建議放置位置：紅色標記處為建議放置防災包的位置。';
+        } else if(analysisResultEn.value) {
+          analysisResult.value = '掃描完成：此地區安全風險評級為中等。建議查看避難路線和躲避位置。';
+        }
+      } else {
+        if(analysisResult.value?.includes('避難路線')) {
+          analysisResultEn.value = 'Evacuation routes marked: Follow the green arrows to the nearest safe zone.';
+        } else if(analysisResult.value?.includes('躲避位置')) {
+          analysisResultEn.value = 'Hiding spots marked: Blue areas indicate safe spots suitable for sheltering.';
+        } else if(analysisResult.value?.includes('防災包')) {
+          analysisResultEn.value = 'Recommended emergency kit placement: Red marks show suggested locations for your emergency kit.';
+        } else if(analysisResult.value) {
+          analysisResultEn.value = 'Scan complete: Safety risk level for this area is moderate. Recommend checking evacuation routes and hiding spots.';
+        }
+      }
     });
 
     // 切換到防災包頁面
@@ -87,47 +204,76 @@ export default {
 
     // 分析上傳的圖片
     const analyzeImage = () => {
-      analysisResult.value = '掃描完成：此地區安全風險評級為中等。建議查看避難路線和躲避位置。';
+      if(currentLanguage.value === 'zh') {
+        analysisResult.value = '掃描完成：此地區安全風險評級為中等。建議查看避難路線和躲避位置。';
+      } else {
+        analysisResultEn.value = 'Scan complete: Safety risk level for this area is moderate. Recommend checking evacuation routes and hiding spots.';
+      }
       scrollToResult();
     };
 
     // 顯示避難路線
     const showEvacuationRoute = () => {
       // 先清空結果，觸發淡入效果
-      analysisResult.value = null;
-      
-      // 延遲顯示新結果，創造淡入效果
-      setTimeout(() => {
-        analysisResult.value = '避難路線已標示：請沿著綠色箭頭方向前進至最近的安全區域。';
-        scrollToResult();
-      }, 150);
+      if(currentLanguage.value === 'zh') {
+        analysisResult.value = null;
+        // 延遲顯示新結果，創造淡入效果
+        setTimeout(() => {
+          analysisResult.value = '避難路線已標示：請沿著綠色箭頭方向前進至最近的安全區域。';
+          scrollToResult();
+        }, 150);
+      } else {
+        analysisResultEn.value = null;
+        setTimeout(() => {
+          analysisResultEn.value = 'Evacuation routes marked: Follow the green arrows to the nearest safe zone.';
+          scrollToResult();
+        }, 150);
+      }
     };
 
     // 顯示躲避位置
     const showHidingSpots = () => {
-      analysisResult.value = null;
-      setTimeout(() => {
-        analysisResult.value = '躲避位置已標示：藍色區域表示適合躲避的安全位置。';
-        scrollToResult();
-      }, 150);
+      if(currentLanguage.value === 'zh') {
+        analysisResult.value = null;
+        setTimeout(() => {
+          analysisResult.value = '躲避位置已標示：藍色區域表示適合躲避的安全位置。';
+          scrollToResult();
+        }, 150);
+      } else {
+        analysisResultEn.value = null;
+        setTimeout(() => {
+          analysisResultEn.value = 'Hiding spots marked: Blue areas indicate safe spots suitable for sheltering.';
+          scrollToResult();
+        }, 150);
+      }
     };
 
     // 顯示防災包位置
     const showSurvivalKitLocation = () => {
-      analysisResult.value = null;
-      setTimeout(() => {
-        analysisResult.value = '防災包建議放置位置：紅色標記處為建議放置防災包的位置。';
-        scrollToResult();
-      }, 150);
+      if(currentLanguage.value === 'zh') {
+        analysisResult.value = null;
+        setTimeout(() => {
+          analysisResult.value = '防災包建議放置位置：紅色標記處為建議放置防災包的位置。';
+          scrollToResult();
+        }, 150);
+      } else {
+        analysisResultEn.value = null;
+        setTimeout(() => {
+          analysisResultEn.value = 'Recommended emergency kit placement: Red marks show suggested locations for your emergency kit.';
+          scrollToResult();
+        }, 150);
+      }
     };
 
     // 計算屬性：根據分析結果設置底色類名
     const resultColorClass = computed(() => {
-      if (analysisResult.value?.includes('避難路線')) {
+      const result = currentLanguage.value === 'zh' ? analysisResult.value : analysisResultEn.value;
+      
+      if (result?.includes('避難路線') || result?.includes('evacuation')) {
         return 'green';
-      } else if (analysisResult.value?.includes('躲避位置')) {
+      } else if (result?.includes('躲避位置') || result?.includes('hiding')) {
         return 'yellow';
-      } else if (analysisResult.value?.includes('防災包')) {
+      } else if (result?.includes('防災包') || result?.includes('kit')) {
         return 'blue';
       }
       return '';
@@ -143,9 +289,11 @@ export default {
       showHidingSpots,
       showSurvivalKitLocation,
       analysisResult,
+      analysisResultEn,
       resultColorClass,
       scrollToResult,
-      pageLoaded
+      pageLoaded,
+      currentLanguage
     };
   },
 };
@@ -154,6 +302,34 @@ export default {
 <style scoped>
 body {
   overflow-x: hidden;
+}
+
+/* 新增：語言切換按鈕樣式 */
+.language-toggle {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  margin-bottom: 10px;
+  padding: 10px 20px;
+}
+
+.language-toggle button {
+  padding: 8px 15px;
+  border: 1px solid #ddd;
+  background-color: white;
+  border-radius: 20px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.language-toggle button.active {
+  background-color: #624444;
+  color: white;
+  border-color: #624444;
+}
+
+.language-toggle button:hover:not(.active) {
+  background-color: #f0f0f0;
 }
 
 /* 新增：頁面淡入效果 */
@@ -507,6 +683,14 @@ body {
     background-color: #f0f0f0;
   }
 }
-
-
+.language-toggle {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  margin-bottom: 10px;
+  padding: 10px 20px;
+  margin-top: 70px; /* 新增這行，往下移動 */
+  position: relative; /* 新增這行，確保定位正確 */
+  z-index: 100; /* 新增這行，確保按鈕可以點擊 */
+}
 </style>
