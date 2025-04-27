@@ -19,38 +19,6 @@
             <p>{{ analysisResult }}</p>
           </div>
         </Transition>
-        
-        <!-- 結果圖與按鈕並排顯示 -->
-        <div class="result-container">
-          <!-- 結果圖 -->
-          <div class="result-image">
-            <p>這裡是結果圖</p>
-          </div>
-
-          <!-- 圖標按鈕組 -->
-          <div class="icon-buttons-container">
-            <div class="icon-button-group" :style="`animation-delay: ${0.3}s`">
-              <button class="icon-button" @click="showEvacuationRoute" title="避難路線">
-                <img src="@/assets/photo/run.png" alt="避難路線" class="icon-image" />
-              </button>
-              <div class="button-label">避難路線</div>
-            </div>
-
-            <div class="icon-button-group" :style="`animation-delay: ${0.5}s`">
-              <button class="icon-button" @click="showHidingSpots" title="躲避位置">
-                <img src="@/assets/photo/hide.png" alt="躲避位置" class="icon-image" />
-              </button>
-              <div class="button-label">躲避位置</div>
-            </div>
-
-            <div class="icon-button-group" :style="`animation-delay: ${0.7}s`">
-              <button class="icon-button" @click="showSurvivalKitLocation" title="防災包放置位置">
-                <img src="@/assets/photo/kit.png" alt="防災包放置位置" class="icon-image" />
-              </button>
-              <div class="button-label">防災包位置</div>
-            </div>
-          </div>
-        </div>
       </div>
     </div>
   </Transition>

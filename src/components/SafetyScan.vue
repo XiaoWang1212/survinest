@@ -6,13 +6,26 @@
     </div>
 
     <div class="scan-uploader">
-      <div class="upload-container" @click="triggerFileUpload" v-if="!scanInProgress && !imagePreview && !generatedImage">
+      <div
+        class="upload-container"
+        @click="triggerFileUpload"
+        v-if="!scanInProgress && !imagePreview && !generatedImage"
+      >
         <div class="upload-icon">📷</div>
         <p>點擊上傳照片或將照片拖放至此處</p>
-        <input type="file" ref="fileInput" @change="handleFileUpload" accept="image/*" style="display: none;" />
+        <input
+          type="file"
+          ref="fileInput"
+          @change="handleFileUpload"
+          accept="image/*"
+          style="display: none"
+        />
       </div>
 
-      <div class="preview-container" v-if="imagePreview && !scanInProgress && !generatedImage">
+      <div
+        class="preview-container"
+        v-if="imagePreview && !scanInProgress && !generatedImage"
+      >
         <img :src="imagePreview" alt="預覽圖" class="preview-image" />
         <div class="preview-actions">
           <button @click="startScan" class="scan-button">開始分析</button>
@@ -26,12 +39,18 @@
         </div>
         <p>{{ scanningMessage }}</p>
       </div>
-      
+
       <!-- 添加生成的參考圖片顯示區域 -->
       <div class="generated-image-container" v-if="generatedImage">
         <h3>AI 生成的安全布置參考</h3>
-        <img :src="generatedImage" alt="AI生成的安全布置參考" class="generated-image" />
-        <p class="reference-description">此參考圖展示了理想的居家安全布置，紅色緊急背包置於門口附近便於快速拿取</p>
+        <img
+          :src="generatedImage"
+          alt="AI生成的安全布置參考"
+          class="generated-image"
+        />
+        <p class="reference-description">
+          此參考圖展示了理想的居家安全布置，紅色緊急背包置於門口附近便於快速拿取
+        </p>
         <div class="preview-actions">
           <button @click="resetAll" class="reset-button">返回</button>
         </div>
@@ -48,8 +67,11 @@
             <p>分析您家的安全狀況</p>
           </div>
         </button>
-        
-        <button class="option-button generate-option" @click="generateSafetyReference">
+
+        <button
+          class="option-button generate-option"
+          @click="generateSafetyReference"
+        >
           <div class="option-icon">🏠</div>
           <div class="option-text">
             <h4>生成安全布置參考</h4>
@@ -72,411 +94,664 @@
 </template>
 
 <script>
-import { ref } from 'vue'
+  import { ref } from "vue";
 
-export default {
-  name: 'SafetyScan',
-  emits: ['scan-complete'],
-  setup(props, { emit }) {
-    const fileInput = ref(null)
-    const imagePreview = ref(null)
-    const scanInProgress = ref(false)
-    const scanningMessage = ref('正在分析環境安全性，請稍候...')
-    const generatedImage = ref(null)
+  export default {
+    name: "SafetyScan",
+    emits: ["scan-complete"],
+    setup(props, { emit }) {
+      const fileInput = ref(null);
+      const imagePreview = ref(null);
+      const scanInProgress = ref(false);
+      const scanningMessage = ref("正在分析環境安全性，請稍候...");
+      const generatedImage = ref(null);
+      const currentFile = ref(null);
+      const currentFileName = ref(""); // 新增一個響應式變量來保存檔案名稱
+      const recognizedObjects = ref([]);
+      const scanStage = ref("idle"); // 'idle', 'recognizing', 'generating', 'complete'
+      const scanProgress = ref(0);
 
-    const triggerFileUpload = () => {
-      fileInput.value.click()
-    }
+      const triggerFileUpload = () => {
+        fileInput.value.click();
+      };
 
-    const handleFileUpload = (event) => {
-      const file = event.target.files[0]
-      if (file) {
-        const reader = new FileReader()
-        reader.onload = e => {
-          imagePreview.value = e.target.result
+      // 修改 handleFileUpload 方法來保存檔案到本地
+      const handleFileUpload = async (event) => {
+        const file = event.target.files[0];
+        if (file) {
+          currentFile.value = file;
+          const reader = new FileReader();
+          reader.onload = (e) => {
+            imagePreview.value = e.target.result;
+            // 生成檔案名稱
+            const timestamp = new Date().getTime();
+            currentFileName.value = `photo_${timestamp}.jpg`;
+          };
+          reader.readAsDataURL(file);
         }
-        reader.readAsDataURL(file)
-      }
-    }
+      };
 
-    const resetUpload = () => {
-      imagePreview.value = null
-      if (fileInput.value) fileInput.value.value = ''
-    }
-    
-    const resetAll = () => {
-      imagePreview.value = null
-      generatedImage.value = null
-      if (fileInput.value) fileInput.value.value = ''
-    }
+      const resetUpload = () => {
+        imagePreview.value = null;
+        currentFile.value = null;
+        recognizedObjects.value = [];
+        if (fileInput.value) fileInput.value.value = "";
+      };
 
-    const startScan = async () => {
-      scanInProgress.value = true
-      scanningMessage.value = '正在分析環境安全性，請稍候...'
-      
-      // 模擬與 API 的調用
-      setTimeout(() => {
-        scanInProgress.value = false
-        
-        // 發出掃描完成事件，附帶結果
-        emit('scan-complete', {
-          dangerZones: [
-            { id: 1, description: '廚房櫃子未固定，地震時可能傾倒', severity: 'high' },
-            { id: 2, description: '窗戶旁有重物，地震時可能掉落', severity: 'medium' }
-          ],
-          escapeRoutes: [
-            { id: 1, description: '主要出口：客廳通往大門', safety: 'high' },
-            { id: 2, description: '次要出口：陽台逃生梯', safety: 'medium' }
-          ],
-          safeZones: [
-            { id: 1, description: '浴室：堅固結構適合躲避震動' }
-          ]
-        })
-      }, 3000)
-    }
-    
-    const generateSafetyReference = async () => {
-      scanInProgress.value = true
-      scanningMessage.value = '正在生成安全布置參考圖，請稍候...'
-      
-      try {
-        // 根據環境選擇正確的 API URL
-        const isAmplify = window.location.hostname.includes("amplifyapp.com")
-        const apiUrl = isAmplify
-      ? "https://t1lwim1as7.execute-api.us-west-2.amazonaws.com/dev"
-      : "scanapi"
+      const resetAll = () => {
+        imagePreview.value = null;
+        generatedImage.value = null;
+        currentFile.value = null;
+        recognizedObjects.value = [];
+        scanStage.value = "idle";
+        scanProgress.value = 0;
+        if (fileInput.value) fileInput.value.value = "";
+      };
 
-        console.log("發送請求到:", apiUrl)
-        
-        // 使用與營養計算相同的 API 端點，但傳送不同的 body
-        const response = await fetch(apiUrl, {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({
-            bucket: "photo-analysisbucket",
-            outputKey: "gen-img/generated_titan.png",
-            prompt: "the element include:table,television,chair,sofa.and A wide-angle view of a realistic modern living room, showing the main entrance door clearly. A red emergency backpack is placed near the door, blending naturally into the scene. The room is bright and detailed, with furniture and decorations visible."
-          }),
-        })
-
-        console.log("API 響應狀態:", response.status)
-
-        if (!response.ok) {
-          throw new Error(`服務器錯誤 (${response.status})`)
+      // 步驟1: 使用 AWS Rekognition 進行物件識別
+      const startScan = async () => {
+        if (!currentFile.value) {
+          alert("請先上傳照片");
+          return;
         }
 
-        // 使用與 SupplyList 組件相同的解析方法
-        const responseText = await response.text()
-        console.log("原始響應:", responseText)
+        scanInProgress.value = true;
+        scanStage.value = "recognizing";
+        scanningMessage.value = "正在分析圖像中的物體...";
+        scanProgress.value = 10;
 
-        // 解析回應
-        let data
         try {
-          data = JSON.parse(responseText)
-          console.log("解析後的數據:", data)
+          // 假設圖片已保存到 assets/photo 目錄
+          // 在實際應用中，這部分可能需要後端配合來實現
+          
+          // 使用本地路徑進行物體識別
+          const isAmplify = window.location.hostname.includes("amplifyapp.com");
+          const rekoUrl = isAmplify
+            ? "https://5vlds4fa5b.execute-api.us-west-2.amazonaws.com/dev/rekog"
+            : "/reko/rekog";
 
-          // 檢查是否有嵌套的 JSON 字符串在 body 屬性中
-          if (data.body && typeof data.body === "string") {
-            try {
-              data = JSON.parse(data.body)
-              console.log("從 body 中解析的數據:", data)
-            } catch (nestedJsonError) {
-              console.error("解析嵌套 JSON 錯誤:", nestedJsonError)
-              throw nestedJsonError
+          const response = await fetch(rekoUrl, {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify({
+              imageKey: "/image/客廳.jpg", 
+            }),
+          });
+
+          scanProgress.value = 50;
+
+          console.log(response);
+          console.log("物體識別 API 響應狀態:", response.status);
+
+          if (!response.ok) {
+            throw new Error(`服務器錯誤 (${response.status})`);
+          }
+
+          // 處理 API 響應
+          const responseText = await response.text();
+          console.log("物體識別原始響應:", responseText);
+
+          // 解析回應
+          let data;
+          try {
+            data = JSON.parse(responseText);
+
+            // 檢查是否有嵌套的 JSON 字符串在 body 屬性中
+            if (data.body && typeof data.body === "string") {
+              data = JSON.parse(data.body);
             }
-          }
-          
-          // 如果成功，顯示生成的圖片
-          if (data.imageUrl) {
-            generatedImage.value = data.imageUrl
-          } else {
-            // 如果沒有返回 imageUrl，使用模擬圖片
-            generatedImage.value = "https://demo-bucket.s3.amazonaws.com/safety-reference.jpg"
-          }
-          
-        } catch (jsonError) {
-          console.error("JSON 解析錯誤:", jsonError)
-          // 使用備用圖片
-          generatedImage.value = "https://demo-bucket.s3.amazonaws.com/safety-reference.jpg"
-        }
-        
-      } catch (error) {
-        console.error("API 調用失敗:", error)
-        // 使用備用圖片
-        generatedImage.value = "https://demo-bucket.s3.amazonaws.com/safety-reference.jpg"
-      } finally {
-        scanInProgress.value = false
-      }
-    }
 
-    return {
-      fileInput,
-      imagePreview,
-      scanInProgress,
-      scanningMessage,
-      generatedImage,
-      triggerFileUpload,
-      handleFileUpload,
-      startScan,
-      resetUpload,
-      resetAll,
-      generateSafetyReference
-    }
-  }
-}
+            // 獲取識別出的物體列表
+            recognizedObjects.value = data.Labels || [];
+            console.log("識別出的物體:", recognizedObjects.value);
+
+            // 成功識別後，進行第二步：生成安全布置參考圖
+            generateSafetyImageFromRecognition();
+          } catch (error) {
+            console.error("解析識別結果錯誤:", error);
+
+            // 即使物體識別失敗，仍嘗試生成圖片
+            generateSafetyImageFromRecognition(true);
+          }
+        } catch (error) {
+          console.error("物體識別請求失敗:", error);
+
+          // 出錯時仍然進行圖像生成，但使用基本提示詞
+          generateSafetyImageFromRecognition(true);
+        }
+      };
+
+      // 步驟2: 使用識別結果生成安全布置參考圖
+      const generateSafetyImageFromRecognition = async (
+        useDefaultPrompt = false
+      ) => {
+        scanStage.value = "generating";
+        scanningMessage.value = "正在生成安全布置參考圖...";
+        scanProgress.value = 50;
+
+        try {
+          // 根據環境選擇正確的 API URL
+          const isAmplify = window.location.hostname.includes("amplifyapp.com");
+          const apiUrl = isAmplify
+            ? "https://t1lwim1as7.execute-api.us-west-2.amazonaws.com/dev"
+            : "/scanapi";
+
+          console.log("發送生成請求到:", apiUrl);
+
+          // 根據識別的物體生成提示詞
+          let prompt =
+            "A wide-angle view of a realistic modern living room, showing the main entrance door clearly. A red emergency backpack is placed near the door, blending naturally into the scene. The room is bright and detailed, with furniture and decorations visible.";
+
+          // 如果有識別結果且不使用默認提示詞，則根據識別結果生成更精確的提示詞
+          if (recognizedObjects.value.length > 0 && !useDefaultPrompt) {
+            const objectList = recognizedObjects.value
+              .filter((obj) => obj.Confidence > 70) // 只使用置信度高的物體
+              .map((obj) => obj.Name)
+              .slice(0, 8) // 限制物體數量，避免提示詞過長
+              .join(", ");
+
+            prompt = `the element include:${objectList}. and ${prompt}`;
+          }
+
+          scanProgress.value = 60;
+
+          // 發送生成請求
+          const response = await fetch(apiUrl, {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify({
+              bucket: "photo-analysisbucket",
+              outputKey: "gen-img/generated_" + Date.now() + ".png",
+              prompt: prompt,
+            }),
+          });
+
+          scanProgress.value = 80;
+
+          console.log("圖像生成 API 響應狀態:", response.status);
+
+          if (!response.ok) {
+            throw new Error(`服務器錯誤 (${response.status})`);
+          }
+
+          // 處理 API 響應
+          const responseText = await response.text();
+          console.log("圖像生成原始響應:", responseText);
+
+          // 解析回應
+          let data;
+          try {
+            data = JSON.parse(responseText);
+
+            // 檢查是否有嵌套的 JSON 字符串在 body 屬性中
+            if (data.body && typeof data.body === "string") {
+              try {
+                data = JSON.parse(data.body);
+              } catch (nestedJsonError) {
+                console.error("解析嵌套 JSON 錯誤:", nestedJsonError);
+              }
+            }
+
+            // 如果成功，顯示生成的圖片
+            if (data.imageUrl) {
+              generatedImage.value = data.imageUrl;
+            } else {
+              // 如果沒有返回 imageUrl，使用模擬圖片
+              generatedImage.value =
+                "https://images.unsplash.com/photo-1560448204-e02f11c3d0e2?q=80&w=1470&auto=format";
+            }
+          } catch (jsonError) {
+            console.error("JSON 解析錯誤:", jsonError);
+            // 使用備用圖片
+            generatedImage.value =
+              "https://images.unsplash.com/photo-1560448204-e02f11c3d0e2?q=80&w=1470&auto=format";
+          }
+
+          scanProgress.value = 100;
+
+          // 發出掃描完成事件，附帶結果
+          emit("scan-complete", {
+            recognizedObjects: recognizedObjects.value,
+            generatedImage: generatedImage.value,
+            dangerZones: [
+              {
+                id: 1,
+                description: "確認大型傢俱是否已固定，地震時可能傾倒",
+                severity: "high",
+              },
+              {
+                id: 2,
+                description: "窗戶旁不應放置重物，地震時可能掉落",
+                severity: "medium",
+              },
+            ],
+            escapeRoutes: [
+              {
+                id: 1,
+                description: "確保通往大門的路徑暢通無阻",
+                safety: "high",
+              },
+              { id: 2, description: "考慮準備替代逃生路線", safety: "medium" },
+            ],
+            safeZones: [{ id: 1, description: "堅固結構處適合躲避震動" }],
+          });
+        } catch (error) {
+          console.error("圖像生成 API 調用失敗:", error);
+          // 使用備用圖片
+          generatedImage.value =
+            "https://images.unsplash.com/photo-1560448204-e02f11c3d0e2?q=80&w=1470&auto=format";
+        } finally {
+          scanInProgress.value = false;
+          scanStage.value = "complete";
+        }
+      };
+
+      // 直接使用提供的提示詞生成圖片，不進行物體識別
+      const generateSafetyReference = async () => {
+        scanInProgress.value = true;
+        scanStage.value = "generating";
+        scanningMessage.value = "正在生成安全布置參考圖...";
+        scanProgress.value = 40;
+
+        try {
+          // 根據環境選擇正確的 API URL
+          const isAmplify = window.location.hostname.includes("amplifyapp.com");
+          const apiUrl = isAmplify
+            ? "https://t1lwim1as7.execute-api.us-west-2.amazonaws.com/dev"
+            : "/scanapi";
+
+          console.log("發送請求到:", apiUrl);
+
+          // 使用預定義的提示詞
+          const response = await fetch(apiUrl, {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify({
+              bucket: "photo-analysisbucket",
+              outputKey: "gen-img/generated_" + Date.now() + ".png",
+              prompt:
+                "the element include:table,television,chair,sofa.and A wide-angle view of a realistic modern living room, showing the main entrance door clearly. A red emergency backpack is placed near the door, blending naturally into the scene. The room is bright and detailed, with furniture and decorations visible.",
+            }),
+          });
+
+          scanProgress.value = 70;
+
+          console.log("API 響應狀態:", response.status);
+
+          if (!response.ok) {
+            throw new Error(`服務器錯誤 (${response.status})`);
+          }
+
+          // 處理 API 響應
+          const responseText = await response.text();
+          console.log("原始響應:", responseText);
+
+          // 解析回應
+          let data;
+          try {
+            data = JSON.parse(responseText);
+            console.log("解析後的數據:", data);
+
+            // 檢查是否有嵌套的 JSON 字符串在 body 屬性中
+            if (data.body && typeof data.body === "string") {
+              try {
+                data = JSON.parse(data.body);
+                console.log("從 body 中解析的數據:", data);
+              } catch (nestedJsonError) {
+                console.error("解析嵌套 JSON 錯誤:", nestedJsonError);
+                throw nestedJsonError;
+              }
+            }
+
+            // 如果成功，顯示生成的圖片
+            if (data.imageUrl) {
+              generatedImage.value = data.imageUrl;
+            } else {
+              // 如果沒有返回 imageUrl，使用模擬圖片
+              generatedImage.value =
+                "https://images.unsplash.com/photo-1560448204-e02f11c3d0e2?q=80&w=1470&auto=format";
+            }
+          } catch (jsonError) {
+            console.error("JSON 解析錯誤:", jsonError);
+            // 使用備用圖片
+            generatedImage.value =
+              "https://images.unsplash.com/photo-1560448204-e02f11c3d0e2?q=80&w=1470&auto=format";
+          }
+        } catch (error) {
+          console.error("API 調用失敗:", error);
+          // 使用備用圖片
+          generatedImage.value =
+            "https://images.unsplash.com/photo-1560448204-e02f11c3d0e2?q=80&w=1470&auto=format";
+        } finally {
+          scanInProgress.value = false;
+          scanStage.value = "complete";
+          scanProgress.value = 100;
+        }
+      };
+
+      const compressImage = (dataUrl) => {
+        return new Promise((resolve) => {
+          const img = new Image();
+          img.onload = () => {
+            // 創建 canvas 元素
+            const canvas = document.createElement("canvas");
+
+            // 設置最大寬度和高度
+            const MAX_WIDTH = 800;
+            const MAX_HEIGHT = 600;
+
+            let width = img.width;
+            let height = img.height;
+
+            // 計算縮放比例
+            if (width > height) {
+              if (width > MAX_WIDTH) {
+                height *= MAX_WIDTH / width;
+                width = MAX_WIDTH;
+              }
+            } else {
+              if (height > MAX_HEIGHT) {
+                width *= MAX_HEIGHT / height;
+                height = MAX_HEIGHT;
+              }
+            }
+
+            // 設置 canvas 尺寸
+            canvas.width = width;
+            canvas.height = height;
+
+            // 在 canvas 上繪製壓縮後的圖像
+            const ctx = canvas.getContext("2d");
+            ctx.drawImage(img, 0, 0, width, height);
+
+            // 轉換為 data URL，降低質量
+            const compressedDataUrl = canvas.toDataURL("image/jpeg", 0.7);
+            resolve(compressedDataUrl);
+          };
+          img.src = dataUrl;
+        });
+      };
+
+      return {
+        fileInput,
+        imagePreview,
+        scanInProgress,
+        scanningMessage,
+        generatedImage,
+        scanStage,
+        scanProgress,
+        recognizedObjects,
+        triggerFileUpload,
+        handleFileUpload,
+        startScan,
+        resetUpload,
+        resetAll,
+        generateSafetyReference,
+        compressImage,
+      };
+    },
+  };
 </script>
 
 <style scoped>
-/* 保留原有樣式 */
-.scan-header h1 {
-  text-align: center;
-  margin-bottom: 20px;
-  color: #624444;
-}
-body {
-  overflow-x: hidden; /* 禁止水平滾動 */
-}
-.safety-scan {
-  max-width: 1000px;
-  margin: 0 auto;
-  padding: 20px;
-}
-
-.scan-header {
-  text-align: center;
-  margin-bottom: 30px;
-}
-
-.subtitle {
-  color: #777;
-  font-size: 1.1rem;
-  margin-top: 10px;
-}
-
-.scan-uploader {
-  margin-bottom: 30px;
-}
-
-.upload-container {
-  border: 2px dashed #ddd;
-  border-radius: 8px;
-  padding: 40px;
-  text-align: center;
-  cursor: pointer;
-  background-color: #ffffff; /* 預設為白色 */
-  transition: background-color 0.3s;
-}
-
-.upload-container:hover {
-  background-color: #d2b48c; /* 靠近時變為淺咖啡色 */
-}
-
-.upload-icon {
-  font-size: 48px;
-  margin-bottom: 15px;
-}
-  
-.preview-container {
-  text-align: center;
-}
-
-.preview-image {
-  max-width: 100%;
-  max-height: 400px;
-  border-radius: 8px;
-  margin-bottom: 15px;
-  box-shadow: 0 3px 10px rgba(0,0,0,0.15);
-}
-
-.preview-actions {
-  display: flex;
-  justify-content: center;
-  gap: 15px;
-  margin-top: 15px;
-}
-
-.scan-button {
-  background-color: #2ecc71;
-  color: white;
-  border: none;
-  padding: 10px 20px;
-  border-radius: 4px;
-  cursor: pointer;
-  font-weight: 500;
-  transition: background-color 0.3s;
-}
-
-.scan-button:hover {
-  background-color: #27ae60;
-}
-
-.reset-button {
-  background-color: #7f8c8d;
-  color: white;
-  border: none;
-  padding: 10px 20px;
-  border-radius: 4px;
-  cursor: pointer;
-  font-weight: 500;
-  transition: background-color 0.3s;
-}
-
-.reset-button:hover {
-  background-color: #6c7a7d;
-}
-
-.scanning-container {
-  padding: 40px;
-  text-align: center;
-}
-
-.scanning-animation {
-  width: 100%;
-  height: 200px;
-  background-color: #f0f0f0;
-  position: relative;
-  margin-bottom: 20px;
-  overflow: hidden;
-  border-radius: 8px;
-}
-
-.scanning-line {
-  position: absolute;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 2px;
-  background-color: #2ecc71;
-  animation: scan 2s infinite;
-}
-
-@keyframes scan {
-  0% { top: 0; }
-  100% { top: 200px; }
-}
-
-.scan-tips {
-  background-color: #f8f9fa;
-  padding: 20px;
-  border-radius: 8px;
-  box-shadow: 0 2px 5px rgba(0,0,0,0.05);
-}
-
-.scan-tips h3 {
-  margin-bottom: 15px;
-  color: #2c3e50;
-  text-align: center;
-}
-
-.scan-tips ul {
-  padding-left: 20px;
-}
-
-.scan-tips li {
-  margin-bottom: 10px;
-  color: #555;
-}
-
-/* 添加新樣式 */
-.scan-options {
-  margin-bottom: 30px;
-}
-
-.scan-options h3 {
-  text-align: center;
-  margin-bottom: 15px;
-  color: #2c3e50;
-}
-
-.options-container {
-  display: flex;
-  gap: 20px;
-  justify-content: center;
-  flex-wrap: wrap;
-}
-
-.option-button {
-  flex: 1;
-  min-width: 250px;
-  max-width: 45%;
-  display: flex;
-  align-items: center;
-  gap: 15px;
-  padding: 20px;
-  border: none;
-  border-radius: 8px;
-  cursor: pointer;
-  text-align: left;
-  box-shadow: 0 3px 6px rgba(0,0,0,0.1);
-  transition: transform 0.2s, box-shadow 0.2s;
-}
-
-.option-button:hover {
-  transform: translateY(-3px);
-  box-shadow: 0 5px 10px rgba(0,0,0,0.15);
-}
-
-.upload-option {
-  background-color: #e8f5e9;
-  color: #2c3e50;
-}
-
-.generate-option {
-  background-color: #e3f2fd;
-  color: #2c3e50;
-}
-
-.option-icon {
-  font-size: 32px;
-  padding: 10px;
-}
-
-.option-text h4 {
-  margin: 0 0 5px 0;
-  font-size: 1.1rem;
-}
-
-.option-text p {
-  margin: 0;
-  font-size: 0.9rem;
-  color: #555;
-}
-
-.generated-image-container {
-  text-align: center;
-  padding: 20px;
-  border-radius: 8px;
-  background-color: #fff;
-  box-shadow: 0 3px 10px rgba(0,0,0,0.1);
-}
-
-.generated-image-container h3 {
-  margin-bottom: 15px;
-  color: #2c3e50;
-}
-
-.generated-image {
-  max-width: 100%;
-  max-height: 500px;
-  border-radius: 8px;
-  box-shadow: 0 3px 10px rgba(0,0,0,0.15);
-}
-
-.reference-description {
-  margin-top: 15px;
-  padding: 10px;
-  background-color: #f8f9fa;
-  border-radius: 6px;
-  color: #555;
-  font-size: 0.95rem;
-}
-
-/* 響應式設計 */
-@media (max-width: 768px) {
-  .option-button {
-    max-width: 100%;
+  /* 保留原有樣式 */
+  .scan-header h1 {
+    text-align: center;
+    margin-bottom: 20px;
+    color: #624444;
   }
-}
+  body {
+    overflow-x: hidden; /* 禁止水平滾動 */
+  }
+  .safety-scan {
+    max-width: 1000px;
+    margin: 0 auto;
+    padding: 20px;
+  }
+
+  .scan-header {
+    text-align: center;
+    margin-bottom: 30px;
+  }
+
+  .subtitle {
+    color: #777;
+    font-size: 1.1rem;
+    margin-top: 10px;
+  }
+
+  .scan-uploader {
+    margin-bottom: 30px;
+  }
+
+  .upload-container {
+    border: 2px dashed #ddd;
+    border-radius: 8px;
+    padding: 40px;
+    text-align: center;
+    cursor: pointer;
+    background-color: #ffffff; /* 預設為白色 */
+    transition: background-color 0.3s;
+  }
+
+  .upload-container:hover {
+    background-color: #d2b48c; /* 靠近時變為淺咖啡色 */
+  }
+
+  .upload-icon {
+    font-size: 48px;
+    margin-bottom: 15px;
+  }
+
+  .preview-container {
+    text-align: center;
+  }
+
+  .preview-image {
+    max-width: 100%;
+    max-height: 400px;
+    border-radius: 8px;
+    margin-bottom: 15px;
+    box-shadow: 0 3px 10px rgba(0, 0, 0, 0.15);
+  }
+
+  .preview-actions {
+    display: flex;
+    justify-content: center;
+    gap: 15px;
+    margin-top: 15px;
+  }
+
+  .scan-button {
+    background-color: #2ecc71;
+    color: white;
+    border: none;
+    padding: 10px 20px;
+    border-radius: 4px;
+    cursor: pointer;
+    font-weight: 500;
+    transition: background-color 0.3s;
+  }
+
+  .scan-button:hover {
+    background-color: #27ae60;
+  }
+
+  .reset-button {
+    background-color: #7f8c8d;
+    color: white;
+    border: none;
+    padding: 10px 20px;
+    border-radius: 4px;
+    cursor: pointer;
+    font-weight: 500;
+    transition: background-color 0.3s;
+  }
+
+  .reset-button:hover {
+    background-color: #6c7a7d;
+  }
+
+  .scanning-container {
+    padding: 40px;
+    text-align: center;
+  }
+
+  .scanning-animation {
+    width: 100%;
+    height: 200px;
+    background-color: #f0f0f0;
+    position: relative;
+    margin-bottom: 20px;
+    overflow: hidden;
+    border-radius: 8px;
+  }
+
+  .scanning-line {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 2px;
+    background-color: #2ecc71;
+    animation: scan 2s infinite;
+  }
+
+  @keyframes scan {
+    0% {
+      top: 0;
+    }
+    100% {
+      top: 200px;
+    }
+  }
+
+  .scan-tips {
+    background-color: #f8f9fa;
+    padding: 20px;
+    border-radius: 8px;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.05);
+  }
+
+  .scan-tips h3 {
+    margin-bottom: 15px;
+    color: #2c3e50;
+    text-align: center;
+  }
+
+  .scan-tips ul {
+    padding-left: 20px;
+  }
+
+  .scan-tips li {
+    margin-bottom: 10px;
+    color: #555;
+  }
+
+  /* 添加新樣式 */
+  .scan-options {
+    margin-bottom: 30px;
+  }
+
+  .scan-options h3 {
+    text-align: center;
+    margin-bottom: 15px;
+    color: #2c3e50;
+  }
+
+  .options-container {
+    display: flex;
+    gap: 20px;
+    justify-content: center;
+    flex-wrap: wrap;
+  }
+
+  .option-button {
+    flex: 1;
+    min-width: 250px;
+    max-width: 45%;
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    padding: 20px;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    text-align: left;
+    box-shadow: 0 3px 6px rgba(0, 0, 0, 0.1);
+    transition: transform 0.2s, box-shadow 0.2s;
+  }
+
+  .option-button:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 5px 10px rgba(0, 0, 0, 0.15);
+  }
+
+  .upload-option {
+    background-color: #e8f5e9;
+    color: #2c3e50;
+  }
+
+  .generate-option {
+    background-color: #e3f2fd;
+    color: #2c3e50;
+  }
+
+  .option-icon {
+    font-size: 32px;
+    padding: 10px;
+  }
+
+  .option-text h4 {
+    margin: 0 0 5px 0;
+    font-size: 1.1rem;
+  }
+
+  .option-text p {
+    margin: 0;
+    font-size: 0.9rem;
+    color: #555;
+  }
+
+  .generated-image-container {
+    text-align: center;
+    padding: 20px;
+    border-radius: 8px;
+    background-color: #fff;
+    box-shadow: 0 3px 10px rgba(0, 0, 0, 0.1);
+  }
+
+  .generated-image-container h3 {
+    margin-bottom: 15px;
+    color: #2c3e50;
+  }
+
+  .generated-image {
+    max-width: 100%;
+    max-height: 500px;
+    border-radius: 8px;
+    box-shadow: 0 3px 10px rgba(0, 0, 0, 0.15);
+  }
+
+  .reference-description {
+    margin-top: 15px;
+    padding: 10px;
+    background-color: #f8f9fa;
+    border-radius: 6px;
+    color: #555;
+    font-size: 0.95rem;
+  }
+
+  /* 響應式設計 */
+  @media (max-width: 768px) {
+    .option-button {
+      max-width: 100%;
+    }
+  }
 </style>
