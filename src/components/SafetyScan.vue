@@ -1,5 +1,6 @@
 <template>
-  <div class="safety-scan">
+  <!-- 中文版本 -->
+  <div class="safety-scan" v-if="currentLanguage === 'zh'">
     <div class="scan-header">
       <h1>AI 安全空間掃描</h1>
       <p class="subtitle">上傳您家的照片，讓 AI 辨識危險源與逃生路線</p>
@@ -24,7 +25,7 @@
         <div class="scanning-animation">
           <div class="scanning-line"></div>
         </div>
-        <p>{{ scanningMessage }}</p>
+        <p>{{ scanningMessageZh }}</p>
       </div>
       
       <!-- 添加生成的參考圖片顯示區域 -->
@@ -69,10 +70,82 @@
       </ul>
     </div>
   </div>
+
+  <!-- 英文版本 -->
+  <div class="safety-scan" v-else>
+    <div class="scan-header">
+      <h1>AI Safety Space Scan</h1>
+      <p class="subtitle">Upload photos of your home for AI to identify hazards and evacuation routes</p>
+    </div>
+
+    <div class="scan-uploader">
+      <div class="upload-container" @click="triggerFileUpload" v-if="!scanInProgress && !imagePreview && !generatedImage">
+        <div class="upload-icon">📷</div>
+        <p>Click to upload a photo or drag and drop it here</p>
+        <input type="file" ref="fileInput" @change="handleFileUpload" accept="image/*" style="display: none;" />
+      </div>
+
+      <div class="preview-container" v-if="imagePreview && !scanInProgress && !generatedImage">
+        <img :src="imagePreview" alt="Preview" class="preview-image" />
+        <div class="preview-actions">
+          <button @click="startScan" class="scan-button">Start Analysis</button>
+          <button @click="resetUpload" class="reset-button">Select Another</button>
+        </div>
+      </div>
+
+      <div class="scanning-container" v-if="scanInProgress">
+        <div class="scanning-animation">
+          <div class="scanning-line"></div>
+        </div>
+        <p>{{ scanningMessageEn }}</p>
+      </div>
+      
+      <!-- 添加生成的參考圖片顯示區域 -->
+      <div class="generated-image-container" v-if="generatedImage">
+        <h3>AI Generated Safety Arrangement Reference</h3>
+        <img :src="generatedImage" alt="AI generated safety arrangement reference" class="generated-image" />
+        <p class="reference-description">This reference image shows the ideal home safety setup with a red emergency backpack placed near the entrance for easy access</p>
+        <div class="preview-actions">
+          <button @click="resetAll" class="reset-button">Return</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="scan-options" v-if="!scanInProgress && !generatedImage">
+      <h3>Select Operation</h3>
+      <div class="options-container">
+        <button class="option-button upload-option" @click="triggerFileUpload">
+          <div class="option-icon">📷</div>
+          <div class="option-text">
+            <h4>Upload Photo for Analysis</h4>
+            <p>Analyze your home's safety status</p>
+          </div>
+        </button>
+        
+        <button class="option-button generate-option" @click="generateSafetyReference">
+          <div class="option-icon">🏠</div>
+          <div class="option-text">
+            <h4>Generate Safety Reference</h4>
+            <p>View ideal safety arrangement solutions</p>
+          </div>
+        </button>
+      </div>
+    </div>
+
+    <div class="scan-tips">
+      <h3>Scanning Tips</h3>
+      <ul>
+        <li>Camera angles should showcase the entire space as much as possible</li>
+        <li>Ensure adequate lighting for the system to identify hazardous items</li>
+        <li>Include doors and windows as potential escape routes in the photo</li>
+        <li>Multi-angle shots can improve analysis accuracy</li>
+      </ul>
+    </div>
+  </div>
 </template>
 
 <script>
-import { ref } from 'vue'
+import { ref, watch, onMounted } from 'vue'
 
 export default {
   name: 'SafetyScan',
@@ -81,8 +154,29 @@ export default {
     const fileInput = ref(null)
     const imagePreview = ref(null)
     const scanInProgress = ref(false)
-    const scanningMessage = ref('正在分析環境安全性，請稍候...')
     const generatedImage = ref(null)
+    
+    // 語言控制
+    const currentLanguage = ref(localStorage.getItem('preferredLanguage') === 'English' ? 'en' : 'zh')
+    
+    // 掃描訊息
+    const scanningMessageZh = ref('正在分析環境安全性，請稍候...')
+    const scanningMessageEn = ref('Analyzing environment safety, please wait...')
+    
+    onMounted(() => {
+      // 載入用戶偏好的語言
+      const savedLanguage = localStorage.getItem('preferredLanguage')
+      if (savedLanguage === 'English') {
+        currentLanguage.value = 'en'
+      } else {
+        currentLanguage.value = 'zh'
+      }
+    })
+    
+    // 監聽語言變化，保存偏好
+    watch(currentLanguage, (newVal) => {
+      localStorage.setItem('preferredLanguage', newVal === 'zh' ? '繁體中文' : 'English')
+    })
 
     const triggerFileUpload = () => {
       fileInput.value.click()
@@ -112,7 +206,12 @@ export default {
 
     const startScan = async () => {
       scanInProgress.value = true
-      scanningMessage.value = '正在分析環境安全性，請稍候...'
+      
+      if (currentLanguage.value === 'zh') {
+        scanningMessageZh.value = '正在分析環境安全性，請稍候...'
+      } else {
+        scanningMessageEn.value = 'Analyzing environment safety, please wait...'
+      }
       
       // 模擬與 API 的調用
       setTimeout(() => {
@@ -121,15 +220,34 @@ export default {
         // 發出掃描完成事件，附帶結果
         emit('scan-complete', {
           dangerZones: [
-            { id: 1, description: '廚房櫃子未固定，地震時可能傾倒', severity: 'high' },
-            { id: 2, description: '窗戶旁有重物，地震時可能掉落', severity: 'medium' }
+            { id: 1, description: currentLanguage.value === 'zh' ? 
+                                 '廚房櫃子未固定，地震時可能傾倒' : 
+                                 'Kitchen cabinets not secured, may tip over during earthquake', 
+              severity: 'high' 
+            },
+            { id: 2, description: currentLanguage.value === 'zh' ? 
+                                 '窗戶旁有重物，地震時可能掉落' : 
+                                 'Heavy objects near windows may fall during earthquake', 
+              severity: 'medium' 
+            }
           ],
           escapeRoutes: [
-            { id: 1, description: '主要出口：客廳通往大門', safety: 'high' },
-            { id: 2, description: '次要出口：陽台逃生梯', safety: 'medium' }
+            { id: 1, description: currentLanguage.value === 'zh' ? 
+                                 '主要出口：客廳通往大門' : 
+                                 'Main exit: Living room to front door', 
+              safety: 'high' 
+            },
+            { id: 2, description: currentLanguage.value === 'zh' ? 
+                                 '次要出口：陽台逃生梯' : 
+                                 'Secondary exit: Balcony escape ladder', 
+              safety: 'medium' 
+            }
           ],
           safeZones: [
-            { id: 1, description: '浴室：堅固結構適合躲避震動' }
+            { id: 1, description: currentLanguage.value === 'zh' ? 
+                                 '浴室：堅固結構適合躲避震動' : 
+                                 'Bathroom: Solid structure suitable for avoiding tremors' 
+            }
           ]
         })
       }, 3000)
@@ -137,14 +255,19 @@ export default {
     
     const generateSafetyReference = async () => {
       scanInProgress.value = true
-      scanningMessage.value = '正在生成安全布置參考圖，請稍候...'
+      
+      if (currentLanguage.value === 'zh') {
+        scanningMessageZh.value = '正在生成安全布置參考圖，請稍候...'
+      } else {
+        scanningMessageEn.value = 'Generating safety arrangement reference, please wait...'
+      }
       
       try {
         // 根據環境選擇正確的 API URL
         const isAmplify = window.location.hostname.includes("amplifyapp.com")
         const apiUrl = isAmplify
-      ? "https://t1lwim1as7.execute-api.us-west-2.amazonaws.com/dev"
-      : "scanapi"
+          ? "https://t1lwim1as7.execute-api.us-west-2.amazonaws.com/dev"
+          : "scanapi"
 
         console.log("發送請求到:", apiUrl)
         
@@ -215,8 +338,10 @@ export default {
       fileInput,
       imagePreview,
       scanInProgress,
-      scanningMessage,
+      scanningMessageZh,
+      scanningMessageEn,
       generatedImage,
+      currentLanguage,
       triggerFileUpload,
       handleFileUpload,
       startScan,
@@ -235,9 +360,11 @@ export default {
   margin-bottom: 20px;
   color: #624444;
 }
+
 body {
   overflow-x: hidden; /* 禁止水平滾動 */
 }
+
 .safety-scan {
   max-width: 1000px;
   margin: 0 auto;

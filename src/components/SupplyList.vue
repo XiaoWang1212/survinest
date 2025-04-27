@@ -240,7 +240,7 @@
 </template>
 
 <script>
-  import { ref, computed } from "vue";
+  import { ref, computed, onMounted } from "vue"; // 移除 watch 引入
 
   export default {
     name: "SupplyList",
@@ -256,7 +256,37 @@
       }); // 使用者資訊
       const suggestions = ref(null); // 儲存建議結果
       const nutritionAnalysis = ref(null); // 儲存營養分析結果
+      
+      // 語言控制
+      const currentLanguage = ref(localStorage.getItem('preferredLanguage') === 'English' ? 'en' : 'zh');
 
+      // 在組件掛載後載入語言偏好
+      onMounted(() => {
+        // 載入用戶偏好的語言
+        const savedLanguage = localStorage.getItem('preferredLanguage')
+        if (savedLanguage === 'English') {
+          currentLanguage.value = 'en'
+        } else {
+          currentLanguage.value = 'zh'
+        }
+        
+        // 定義事件處理函數，以便移除時能夠引用相同的函數
+        const handleStorageChange = (event) => {
+          if (event.key === 'preferredLanguage') {
+            currentLanguage.value = event.newValue === 'English' ? 'en' : 'zh'
+          }
+        }
+        
+        // 添加事件監聽器
+        window.addEventListener('storage', handleStorageChange)
+        
+        // 組件卸載時移除事件監聽器
+        return () => {
+          window.removeEventListener('storage', handleStorageChange)
+        }
+      });
+
+      // 中文物品清單
       const supplies = [
         // 食物
         {
@@ -380,11 +410,142 @@
           priority: "medium",
         },
       ];
+      
+      // 英文物品清單
+      const suppliesEn = [
+        // 食物
+        {
+          id: 1,
+          name: "Drinking Water",
+          description: "At least 3 liters per person per day, recommend storing 3-day supply",
+          category: "food",
+          priority: "high",
+        },
+        {
+          id: 2,
+          name: "Emergency Food",
+          description: "High-calorie, easy-to-store food items, check expiration dates",
+          category: "food",
+          priority: "high",
+        },
+        {
+          id: 3,
+          name: "Dry Food",
+          description: "Lightweight and long-lasting dry food",
+          category: "food",
+          priority: "medium",
+        },
+
+        // 保暖衣物
+        {
+          id: 4,
+          name: "Hand Warmers",
+          description: "For warmth in cold environments",
+          category: "clothing",
+          priority: "high",
+        },
+        {
+          id: 5,
+          name: "Clothes",
+          description: "Extra set of clean clothing",
+          category: "clothing",
+          priority: "medium",
+        },
+        {
+          id: 6,
+          name: "Small Blanket",
+          description: "Lightweight and warm emergency blanket",
+          category: "clothing",
+          priority: "medium",
+        },
+
+        // 個人醫藥用品
+        {
+          id: 7,
+          name: "First Aid Kit",
+          description: "Includes bandages, gauze, antiseptics and basic medical supplies",
+          category: "medical",
+          priority: "high",
+        },
+        {
+          id: 8,
+          name: "Medications",
+          description: "Personal medications such as cold medicine, pain relievers, etc.",
+          category: "medical",
+          priority: "high",
+        },
+
+        // 重要物品
+        {
+          id: 9,
+          name: "Small Amount of Cash",
+          description: "For transactions during emergencies",
+          category: "important",
+          priority: "high",
+        },
+        {
+          id: 10,
+          name: "Copies of Documents",
+          description: "Copies of ID card, passport and other important documents",
+          category: "important",
+          priority: "high",
+        },
+
+        // 其他工具類
+        {
+          id: 11,
+          name: "Flashlight",
+          description: "Recommend LED flashlights for low power consumption and high brightness",
+          category: "tools",
+          priority: "high",
+        },
+        {
+          id: 12,
+          name: "Whistle",
+          description: "For emergency signaling",
+          category: "tools",
+          priority: "medium",
+        },
+        {
+          id: 13,
+          name: "Radio",
+          description: "For receiving emergency broadcasts",
+          category: "tools",
+          priority: "medium",
+        },
+        {
+          id: 14,
+          name: "Batteries",
+          description: "For flashlights, radios and other devices",
+          category: "tools",
+          priority: "high",
+        },
+        {
+          id: 15,
+          name: "Work Gloves",
+          description: "For hand protection",
+          category: "tools",
+          priority: "low",
+        },
+        {
+          id: 16,
+          name: "Swiss Army Knife",
+          description: "Multi-function tool useful in various situations",
+          category: "tools",
+          priority: "medium",
+        },
+      ];
 
       const priorityLabels = {
         high: "最高優先",
         medium: "中度優先",
         low: "建議準備",
+      };
+      
+      const priorityLabelsEn = {
+        high: "Highest Priority",
+        medium: "Medium Priority",
+        low: "Recommended",
       };
 
       const suppliesByCategory = computed(() => {
@@ -394,16 +555,34 @@
           return acc;
         }, {});
       });
+      
+      const suppliesByCategoryEn = computed(() => {
+        return suppliesEn.reduce((acc, item) => {
+          if (!acc[item.category]) acc[item.category] = [];
+          acc[item.category].push(item);
+          return acc;
+        }, {});
+      });
 
       const saveChecklist = () => {
         const savedItems = Object.keys(checkedItems.value)
           .filter((id) => checkedItems.value[id])
-          .map((id) => supplies.find((item) => item.id === parseInt(id)));
+          .map((id) => {
+            const itemId = parseInt(id);
+            return currentLanguage.value === 'zh' 
+              ? supplies.find((item) => item.id === itemId)
+              : suppliesEn.find((item) => item.id === itemId);
+          });
+          
         console.log("已儲存的清單:", savedItems);
-        alert("清單已儲存！");
+        if (currentLanguage.value === 'zh') {
+          alert("清單已儲存！");
+        } else {
+          alert("List has been saved!");
+        }
       };
 
-      // 新增的函數：處理照片上傳
+      // 處理照片上傳
       const handleFileUpload = (event) => {
         const file = event.target.files[0];
         if (file) {
@@ -415,7 +594,7 @@
         }
       };
 
-      // 修改 calculateSuggestions 方法
+      // 計算建議
       const calculateSuggestions = async () => {
         // 檢查必填欄位
         if (
@@ -423,7 +602,11 @@
           !userInfo.value.height ||
           !userInfo.value.weight
         ) {
-          alert("請填寫完整的個人資訊");
+          if (currentLanguage.value === 'zh') {
+            alert("請填寫完整的個人資訊");
+          } else {
+            alert("Please fill in all personal information");
+          }
           return;
         }
 
@@ -590,7 +773,11 @@
         };
 
         // 顯示本地計算訊息
-        alert("使用本地計算功能 (API 不可用)");
+        if (currentLanguage.value === 'zh') {
+          alert("使用本地計算功能 (API 不可用)");
+        } else {
+          alert("Using local calculation function (API unavailable)");
+        }
       };
 
       const analyzeNutrition = async () => {
@@ -600,7 +787,11 @@
           !userInfo.value.height ||
           !userInfo.value.weight
         ) {
-          alert("請先填寫完整的個人資訊");
+          if (currentLanguage.value === 'zh') {
+            alert("請先填寫完整的個人資訊");
+          } else {
+            alert("Please fill in all personal information first");
+          }
           return;
         }
 
@@ -627,6 +818,7 @@
             },
             body: JSON.stringify({
               calories: parseInt(suggestions.value.caloriesPerMeal),
+              language: currentLanguage.value === 'zh' ? 'zh' : 'en'
             }),
           });
 
@@ -663,7 +855,7 @@
             // 設置營養分析結果
             nutritionAnalysis.value = {
               loading: false,
-              text: data.recommendation || data.text || "沒有可用的營養建議",
+              text: data.recommendation || data.text || (currentLanguage.value === 'zh' ? "沒有可用的營養建議" : "No nutrition recommendations available"),
             };
           } catch (jsonError) {
             console.error("JSON 解析錯誤:", jsonError);
@@ -671,14 +863,16 @@
             // 如果無法解析為 JSON，則直接顯示文本
             nutritionAnalysis.value = {
               loading: false,
-              text: responseText || "無法解析回應",
+              text: responseText || (currentLanguage.value === 'zh' ? "無法解析回應" : "Unable to parse response"),
             };
           }
         } catch (error) {
           console.error("營養分析 API 調用失敗:", error);
           nutritionAnalysis.value = {
             loading: false,
-            text: "無法獲取營養建議，請稍後再試。" + error.message,
+            text: currentLanguage.value === 'zh' 
+              ? "無法獲取營養建議，請稍後再試。" + error.message
+              : "Unable to get nutrition recommendations, please try again later. " + error.message,
           };
         }
       };
@@ -698,11 +892,29 @@
           .replace(/<li>(.*?)<\/li>/g, "<ul><li>$1</li></ul>")
           .replace(/<\/ul><ul>/g, "");
       });
+      
+      // 英文版格式化營養文本
+      const formattedNutritionTextEn = computed(() => {
+        if (!nutritionAnalysis.value || !nutritionAnalysis.value.text) {
+          return "";
+        }
+
+        // 將文本中的換行轉換為 HTML 換行標籤
+        return nutritionAnalysis.value.text
+          .replace(/\n/g, "<br>")
+          .replace(/\*\*(.*?)\*\*/g, "<strong>$1</strong>")
+          .replace(/\*(.*?)\*/g, "<em>$1</em>")
+          .replace(/- (.*?)(?=\n|$)/g, "<li>$1</li>")
+          .replace(/<li>(.*?)<\/li>/g, "<ul><li>$1</li></ul>")
+          .replace(/<\/ul><ul>/g, "");
+      });
 
       return {
         activeCategory,
         suppliesByCategory,
+        suppliesByCategoryEn,
         priorityLabels,
+        priorityLabelsEn,
         checkedItems,
         saveChecklist,
         uploadedImage,
@@ -713,6 +925,8 @@
         analyzeNutrition,
         nutritionAnalysis,
         formattedNutritionText,
+        formattedNutritionTextEn,
+        currentLanguage,
       };
     },
   };
