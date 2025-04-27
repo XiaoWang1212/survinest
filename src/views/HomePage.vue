@@ -11,6 +11,9 @@
       }"
       :data-darkening="isDarkening"
     >
+      <!-- 背景圖片容器 -->
+      <div class="feature-bg safety-scan-bg"></div>
+      
       <div class="overlay" v-if="hoveredFeature === 'safety-scan'">
         <h2>安全掃描功能</h2>
         <div class="feature-content">
@@ -44,6 +47,9 @@
       }"
       :data-darkening="isDarkening"
     >
+      <!-- 背景圖片容器 -->
+      <div class="feature-bg survival-kit-bg"></div>
+      
       <div class="overlay" v-if="hoveredFeature === 'survival-kit'">
         <h2>防災包功能</h2>
         <div class="feature-content">
@@ -134,18 +140,41 @@ export default {
   transition: all 0.5s ease;
   height: 100%;
   z-index: 1;
-  overflow: hidden; /* 新增：確保圖片不會溢出 */
+  overflow: hidden; /* 確保圖片不會溢出 */
 }
 
-.feature.safety-scan {
-  background-color: #f0ead2;
+/* 新增背景圖片樣式 */
+.feature-bg {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-size: cover;
+  background-position: center;
+  transition: transform 0.5s ease;
+  z-index: -1;
 }
 
-.feature.survival-kit {
-  background-color: #dde5b6;
+.safety-scan-bg {
+  background-image: url('@/assets/images/scan-bg.jpg'); /* 安全掃描背景圖片 */
 }
 
-/* Remove feature-icon styles */
+.survival-kit-bg {
+  background-image: url('@/assets/images/kit-bg.jpg'); /* 防災包背景圖片 */
+}
+
+/* 鼠標懸停效果 */
+.feature:hover .feature-bg {
+  transform: scale(1.05); /* 鼠標懸停時圖片輕微放大 */
+}
+
+/* 擴展時的圖片效果 */
+.feature.expanding .feature-bg {
+  transform: scale(1.1); /* 點擊時圖片放大 */
+  transition: transform 0.8s ease;
+}
+
 .feature-icon {
   display: none;
 }
@@ -203,7 +232,7 @@ export default {
   left: 0;
   width: 100%;
   height: 100%;
-  background-color: rgba(0, 0, 0, 0.7);
+  background-color: rgba(0, 0, 0, 0.4);
   display: flex;
   flex-direction: column;
   justify-content: center;
@@ -211,6 +240,7 @@ export default {
   opacity: 0;
   transition: opacity 0.3s ease-in-out;
   pointer-events: none;
+  z-index: 2; /* 確保遮罩層在圖片上方 */
 }
 
 .feature.hovered .overlay {
@@ -224,6 +254,7 @@ export default {
   transition: all 0.6s cubic-bezier(0.175, 0.885, 0.32, 1.275);
   margin-bottom: 20px;
   font-size: 2.5em;
+  text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5); /* 添加文字陰影增強可讀性 */
 }
 
 .feature-content {
@@ -243,6 +274,7 @@ export default {
   opacity: 0;
   transform: translateY(50px);
   transition: all 0.6s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+  text-shadow: 1px 1px 3px rgba(0, 0, 0, 0.7); /* 添加文字陰影 */
 }
 
 .feature.hovered h2 {
@@ -288,11 +320,41 @@ export default {
   opacity: 0;
   transform: translateY(50px);
   transition: all 0.6s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+  text-shadow: 1px 1px 3px rgba(0, 0, 0, 0.7); /* 添加文字陰影 */
 }
 
 .feature.hovered .main-desc {
   opacity: 1;
   transform: translateY(0);
   transition-delay: 0.3s;
+}
+
+/* 添加響應式設計 */
+@media (max-width: 768px) {
+  .feature h2 {
+    font-size: 2em;
+  }
+  
+  .main-desc {
+    font-size: 1em;
+  }
+  
+  .feature-list li {
+    margin: 10px 0;
+  }
+}
+
+@media (max-width: 480px) {
+  .home-page {
+    flex-direction: column; /* 在手機上改為上下排列 */
+  }
+  
+  .feature h2 {
+    font-size: 1.5em;
+  }
+  
+  .feature-list li {
+    margin: 8px 0;
+  }
 }
 </style>
