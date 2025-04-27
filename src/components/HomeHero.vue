@@ -11,18 +11,14 @@
       </div>
     </div>
 
-    <!-- 右上角登入按鈕 -->
+    <!-- 主內容 - 只保留了解更多按鈕 -->
+    <div class="content-wrapper">
+      <button class="more-button" @click="showModal = true">了解更多</button>
+    </div>    
+
     <div class="top-buttons">
       <button class="btn-primary" @click="navigateToLogin()">註冊 / 登入</button>
       <button class="btn-secondary" @click="navigateToHome()">快速進入</button>
-    </div>
-
-    <!-- 主內容 -->
-    <div>
-      <p class="sub-text">
-        災害來臨怎麼辦？別怕，SurviNest 用 AI 幫你找到最佳避難點、<br>打造完美防災包，讓你從容不迫、安心備戰！
-      </p>
-      <button class="more-button" @click="showModal = true">了解更多</button>
     </div>
 
     <!-- Modal -->
@@ -50,6 +46,7 @@
       </div>
     </div>
   </div>
+
 </template>
 
 <script>
@@ -84,6 +81,43 @@ export default {
 </script>
 
 <style scoped>
+
+.content-wrapper {
+  position: relative;
+  z-index: 2;
+  margin-top: 100px;
+}
+
+.more-button {
+  background-color: #2c3e50;
+  color: white;
+  padding: 10px 25px;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 1rem;
+  transition: all 0.3s ease;
+  font-weight: bold;
+}
+
+.more-button:hover {
+  background-color: #1a242f;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(44, 62, 80, 0.3);
+}
+
+@media (max-width: 768px) {
+  .content-wrapper {
+    margin-top: 80px; /* 中等螢幕時縮小邊距 */
+  }
+}
+
+@media (max-width: 480px) {
+  .content-wrapper {
+    margin-top: 60px; /* 小螢幕時進一步縮小邊距 */
+  }
+}
+
 .hero-section {
   display: flex;
   align-items: flex-start;
@@ -94,7 +128,7 @@ export default {
   background-position: center;
   position: relative;
   padding-left: 10%;
-  padding-top: 29%;
+  padding-top: 33%;
 }
 
 /* 左上角語言選單 */
@@ -199,34 +233,6 @@ export default {
   box-shadow: 0 4px 12px rgba(44, 62, 80, 0.2);
 }
 
-.sub-text {
-  font-size: clamp(1.1rem, 2vw, 1.4rem); /* 使用 clamp 讓字體大小在一個範圍內自適應 */
-  font-weight: bold;
-  color: #000000;
-  line-height: 1.7;
-  margin-bottom: 25px;
-  text-shadow: 1px 1px 2px rgba(255,255,255,0.8);
-  max-width: 800px; /* 限制最大寬度 */
-}
-
-.more-button {
-  background-color: #2c3e50;
-  color: white;
-  padding: 10px 25px; /* 縮小 */
-  border: none;
-  border-radius: 8px;
-  cursor: pointer;
-  font-size: 1rem; /* 縮小 */
-  transition: all 0.3s ease;
-  font-weight: bold;
-}
-
-.more-button:hover {
-  background-color: #1a242f;
-  transform: translateY(-2px);
-  box-shadow: 0 4px 12px rgba(44, 62, 80, 0.3);
-}
-
 .modal {
   position: fixed;
   top: 0;
@@ -316,27 +322,11 @@ export default {
   box-shadow: 0 4px 12px rgba(231, 76, 60, 0.3);
 }
 /* 響應式設計 */
-@media (max-width: 1024px) {
-  .hero-section {
-    padding-left: 5%;
-    padding-top: 35%;
-  }
-
   .sub-text {
     padding-right: 5%;
   }
 
-  .modal-content {
-    width: 90%;
-    margin: 0 20px;
-  }
-}
-
 @media (max-width: 768px) {
-  .hero-section {
-    padding-top: 40%;
-  }
-
   .language-wrapper {
     top: 15px;
     left: 15px;
@@ -368,9 +358,6 @@ export default {
 }
 
 @media (max-width: 480px) {
-  .hero-section {
-    padding-top: 45%;
-  }
 
   .language-selector {
     padding: 8px 12px;
@@ -437,4 +424,26 @@ export default {
     padding-right: 5px;
   }
 }
+
+@media (max-width: 768px) {
+  .more-button {
+    padding: 8px 20px;
+    font-size: 0.9rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .more-button {
+    padding: 7px 18px;
+    font-size: 0.85rem;
+  }
+}
+
+@media (max-width: 320px) {
+  .more-button {
+    padding: 6px 15px;
+    font-size: 0.8rem;
+  }
+}
+
 </style>
