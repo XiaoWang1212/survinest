@@ -1,5 +1,5 @@
 <template>
-  <div class="hero-section" @click="handleOutsideClick">
+  <div class="hero-section" @click="handleOutsideClick" :class="{ 'english-bg': currentLanguage === 'English' }">
     <!-- 左上角語言切換 -->
     <div class="language-wrapper" @click.stop>
       <div class="language-selector" @click="toggleLanguageDropdown">
@@ -13,16 +13,22 @@
 
     <!-- 主內容 - 只保留了解更多按鈕 -->
     <div class="content-wrapper">
-      <button class="more-button" @click="showModal = true">了解更多</button>
+      <button class="more-button" @click="showModal = true">
+        {{ currentLanguage === 'English' ? 'Learn More' : '了解更多' }}
+      </button>
     </div>    
 
     <div class="top-buttons">
-      <button class="btn-primary" @click="navigateToLogin()">註冊 / 登入</button>
-      <button class="btn-secondary" @click="navigateToHome()">快速進入</button>
+      <button class="btn-primary" @click="navigateToLogin()">
+        {{ currentLanguage === 'English' ? 'Sign Up / Log In' : '註冊 / 登入' }}
+      </button>
+      <button class="btn-secondary" @click="navigateToHome()">
+        {{ currentLanguage === 'English' ? 'Quick Start' : '快速進入' }}
+      </button>
     </div>
 
-    <!-- Modal -->
-    <div class="modal" v-if="showModal">
+    <!-- Modal - 中文版本 -->
+    <div class="modal" v-if="showModal && currentLanguage === '繁體中文'">
       <div class="modal-content">
         <div class="feature">
           <h3 class="feature-title">🗺️ 地震逃生路線及躲避位置建議</h3>
@@ -45,8 +51,32 @@
         <button class="close-button" @click="showModal = false">關閉</button>
       </div>
     </div>
-  </div>
 
+    <!-- Modal - 英文版本 -->
+    <div class="modal" v-if="showModal && currentLanguage === 'English'">
+      <div class="modal-content">
+        <div class="feature">
+          <h3 class="feature-title">🗺️ Earthquake Evacuation Routes & Safe Spots</h3>
+          <p>
+            Simply <span class="highlight">take photos of your home</span>, and SurviNest will identify hazards and exits to create complete <span class="highlight">evacuation routes</span> and <span class="highlight">safe spots</span>.
+          </p>
+        </div>
+        <div class="feature">
+          <h3 class="feature-title">🎒 Emergency Kit Recommendations</h3>
+          <p>
+            Get personalized <span class="highlight">supply lists</span> and <span class="highlight">storage suggestions</span> based on family size and individual needs.
+          </p>
+        </div>
+        <div class="feature">
+          <h3 class="feature-title">🍽️ Survival Assistance System</h3>
+          <p>
+            During emergencies, SurviNest <span class="highlight">automatically plans meals based on available food and personal health conditions</span> to help you wait for rescue!
+          </p>
+        </div>
+        <button class="close-button" @click="showModal = false">Close</button>
+      </div>
+    </div>
+  </div>
 </template>
 
 <script>
@@ -59,12 +89,21 @@ export default {
       showLanguageDropdown: false
     }
   },
+  created() {
+    // 載入用戶偏好的語言
+    const savedLanguage = localStorage.getItem('preferredLanguage');
+    if (savedLanguage) {
+      this.currentLanguage = savedLanguage;
+    }
+  },
   methods: {
     toggleLanguageDropdown() {
       this.showLanguageDropdown = !this.showLanguageDropdown;
     },
     setLanguage(language) {
       this.currentLanguage = language;
+      // 保存語言偏好到 localStorage
+      localStorage.setItem('preferredLanguage', language);
       this.showLanguageDropdown = false;
     },
     handleOutsideClick() {
@@ -129,6 +168,11 @@ export default {
   position: relative;
   padding-left: 10%;
   padding-top: 33%;
+  transition: background-image 0.5s ease; /* 平滑過渡背景圖片 */
+}
+
+.hero-section.english-bg {
+  background-image: url('@/assets/backgroundEn.png');
 }
 
 /* 左上角語言選單 */
@@ -322,9 +366,9 @@ export default {
   box-shadow: 0 4px 12px rgba(231, 76, 60, 0.3);
 }
 /* 響應式設計 */
-  .sub-text {
-    padding-right: 5%;
-  }
+.sub-text {
+  padding-right: 5%;
+}
 
 @media (max-width: 768px) {
   .language-wrapper {
@@ -358,7 +402,6 @@ export default {
 }
 
 @media (max-width: 480px) {
-
   .language-selector {
     padding: 8px 12px;
     font-size: 0.9rem;
@@ -445,5 +488,4 @@ export default {
     font-size: 0.8rem;
   }
 }
-
 </style>
