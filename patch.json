@@ -1,0 +1,7 @@
+[
+  {
+    "op": "replace",
+    "path": "/corsConfiguration",
+    "value": "{\"allowOrigins\":[\"*\"],\"allowMethods\":[\"POST\",\"OPTIONS\",\"GET\"],\"allowHeaders\":[\"Content-Type\",\"X-Amz-Date\",\"Authorization\",\"X-Api-Key\",\"X-Amz-Security-Token\"],\"allowCredentials\":false}"
+  }
+]

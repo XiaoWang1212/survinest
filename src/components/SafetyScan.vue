@@ -6,13 +6,13 @@
     </div>
 
     <div class="scan-uploader">
-      <div class="upload-container" @click="triggerFileUpload" v-if="!scanInProgress && !imagePreview">
+      <div class="upload-container" @click="triggerFileUpload" v-if="!scanInProgress && !imagePreview && !generatedImage">
         <div class="upload-icon">📷</div>
         <p>點擊上傳照片或將照片拖放至此處</p>
         <input type="file" ref="fileInput" @change="handleFileUpload" accept="image/*" style="display: none;" />
       </div>
 
-      <div class="preview-container" v-if="imagePreview && !scanInProgress">
+      <div class="preview-container" v-if="imagePreview && !scanInProgress && !generatedImage">
         <img :src="imagePreview" alt="預覽圖" class="preview-image" />
         <div class="preview-actions">
           <button @click="startScan" class="scan-button">開始分析</button>
@@ -24,7 +24,38 @@
         <div class="scanning-animation">
           <div class="scanning-line"></div>
         </div>
-        <p>正在分析環境安全性，請稍候...</p>
+        <p>{{ scanningMessage }}</p>
+      </div>
+      
+      <!-- 添加生成的參考圖片顯示區域 -->
+      <div class="generated-image-container" v-if="generatedImage">
+        <h3>AI 生成的安全布置參考</h3>
+        <img :src="generatedImage" alt="AI生成的安全布置參考" class="generated-image" />
+        <p class="reference-description">此參考圖展示了理想的居家安全布置，紅色緊急背包置於門口附近便於快速拿取</p>
+        <div class="preview-actions">
+          <button @click="resetAll" class="reset-button">返回</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="scan-options" v-if="!scanInProgress && !generatedImage">
+      <h3>選擇操作</h3>
+      <div class="options-container">
+        <button class="option-button upload-option" @click="triggerFileUpload">
+          <div class="option-icon">📷</div>
+          <div class="option-text">
+            <h4>上傳照片分析</h4>
+            <p>分析您家的安全狀況</p>
+          </div>
+        </button>
+        
+        <button class="option-button generate-option" @click="generateSafetyReference">
+          <div class="option-icon">🏠</div>
+          <div class="option-text">
+            <h4>生成安全布置參考</h4>
+            <p>查看理想的安全布置方案</p>
+          </div>
+        </button>
       </div>
     </div>
 
@@ -37,24 +68,6 @@
         <li>多角度拍攝可提高分析準確度</li>
       </ul>
     </div>
-    <div class="furniture-checklist">
-      <h3>家具確認清單</h3>
-      <div class="checklist-container">
-        <label v-for="(item, index) in furnitureItems" 
-               :key="index" 
-               class="checkbox-item">
-          <input type="checkbox" 
-                 v-model="checkedFurniture[item.id]">
-          <span class="checkmark"></span>
-          <span class="label-text">{{ item.name }}</span>
-        </label>
-      </div>
-    </div>
-    <div class="confirm-button-container">
-        <button class="confirm-button" @click="confirmFurnitureList">
-          確認家具清單
-        </button>
-      </div>
   </div>
 </template>
 
@@ -68,6 +81,8 @@ export default {
     const fileInput = ref(null)
     const imagePreview = ref(null)
     const scanInProgress = ref(false)
+    const scanningMessage = ref('正在分析環境安全性，請稍候...')
+    const generatedImage = ref(null)
 
     const triggerFileUpload = () => {
       fileInput.value.click()
@@ -84,10 +99,22 @@ export default {
       }
     }
 
+    const resetUpload = () => {
+      imagePreview.value = null
+      if (fileInput.value) fileInput.value.value = ''
+    }
+    
+    const resetAll = () => {
+      imagePreview.value = null
+      generatedImage.value = null
+      if (fileInput.value) fileInput.value.value = ''
+    }
+
     const startScan = async () => {
       scanInProgress.value = true
+      scanningMessage.value = '正在分析環境安全性，請稍候...'
       
-      // 模擬與 Bedrock Nova 的 API 調用
+      // 模擬與 API 的調用
       setTimeout(() => {
         scanInProgress.value = false
         
@@ -107,61 +134,102 @@ export default {
         })
       }, 3000)
     }
+    
+    const generateSafetyReference = async () => {
+      scanInProgress.value = true
+      scanningMessage.value = '正在生成安全布置參考圖，請稍候...'
+      
+      try {
+        // 根據環境選擇正確的 API URL
+        const isAmplify = window.location.hostname.includes("amplifyapp.com")
+        const apiUrl = isAmplify
+      ? "https://t1lwim1as7.execute-api.us-west-2.amazonaws.com/dev"
+      : "scanapi"
 
-    const resetUpload = () => {
-      imagePreview.value = null
-      fileInput.value.value = ''
+        console.log("發送請求到:", apiUrl)
+        
+        // 使用與營養計算相同的 API 端點，但傳送不同的 body
+        const response = await fetch(apiUrl, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            bucket: "photo-analysisbucket",
+            outputKey: "gen-img/generated_titan.png",
+            prompt: "the element include:table,television,chair,sofa.and A wide-angle view of a realistic modern living room, showing the main entrance door clearly. A red emergency backpack is placed near the door, blending naturally into the scene. The room is bright and detailed, with furniture and decorations visible."
+          }),
+        })
+
+        console.log("API 響應狀態:", response.status)
+
+        if (!response.ok) {
+          throw new Error(`服務器錯誤 (${response.status})`)
+        }
+
+        // 使用與 SupplyList 組件相同的解析方法
+        const responseText = await response.text()
+        console.log("原始響應:", responseText)
+
+        // 解析回應
+        let data
+        try {
+          data = JSON.parse(responseText)
+          console.log("解析後的數據:", data)
+
+          // 檢查是否有嵌套的 JSON 字符串在 body 屬性中
+          if (data.body && typeof data.body === "string") {
+            try {
+              data = JSON.parse(data.body)
+              console.log("從 body 中解析的數據:", data)
+            } catch (nestedJsonError) {
+              console.error("解析嵌套 JSON 錯誤:", nestedJsonError)
+              throw nestedJsonError
+            }
+          }
+          
+          // 如果成功，顯示生成的圖片
+          if (data.imageUrl) {
+            generatedImage.value = data.imageUrl
+          } else {
+            // 如果沒有返回 imageUrl，使用模擬圖片
+            generatedImage.value = "https://demo-bucket.s3.amazonaws.com/safety-reference.jpg"
+          }
+          
+        } catch (jsonError) {
+          console.error("JSON 解析錯誤:", jsonError)
+          // 使用備用圖片
+          generatedImage.value = "https://demo-bucket.s3.amazonaws.com/safety-reference.jpg"
+        }
+        
+      } catch (error) {
+        console.error("API 調用失敗:", error)
+        // 使用備用圖片
+        generatedImage.value = "https://demo-bucket.s3.amazonaws.com/safety-reference.jpg"
+      } finally {
+        scanInProgress.value = false
+      }
     }
-    const furnitureItems = [
-      { id: 'bed', name: '床（單人床/雙人床）' },
-      { id: 'wardrobe', name: '衣櫃' },
-      { id: 'desk', name: '書桌、椅子' },
-      { id: 'bookshelf', name: '書架、櫃子' },
-      { id: 'decoration', name: '掛畫、裝飾物' },
-      { id: 'floorLamp', name: '落地燈' },
-      { id: 'mirror', name: '鏡子' },
-      { id: 'sofa', name: '沙發' },
-      { id: 'tv', name: '電視、電視櫃' },
-      { id: 'showcase', name: '書櫃、展示櫃' },
-      { id: 'coffeeTable', name: '茶几' },
-      { id: 'chandelier', name: '吊燈' },
-      { id: 'ornaments', name: '擺飾（如花瓶、雕塑）' },
-      { id: 'carpet', name: '地毯' },
-      { id: 'bathroom', name: '洗手台、馬桶' },
-      { id: 'bath', name: '浴缸、淋浴間' },
-      { id: 'shelf', name: '置物架' },
-      { id: 'bathroomMirror', name: '鏡子' },
-      { id: 'waterHeater', name: '熱水器' }
-    ];
-
-    const checkedFurniture = ref({});
-    furnitureItems.forEach(item => {
-      checkedFurniture.value[item.id] = false;
-    });
-
-    const confirmFurnitureList = () => {
-      // 可以在這裡處理確認後的邏輯
-      console.log('已確認的家具:', checkedFurniture.value);
-    };
-
 
     return {
       fileInput,
       imagePreview,
       scanInProgress,
+      scanningMessage,
+      generatedImage,
       triggerFileUpload,
       handleFileUpload,
       startScan,
       resetUpload,
-      furnitureItems,
-      checkedFurniture,
-      confirmFurnitureList
+      resetAll,
+      generateSafetyReference
     }
   }
 }
 </script>
 
 <style scoped>
+/* 保留原有樣式 */
 .scan-header h1 {
   text-align: center;
   margin-bottom: 20px;
@@ -213,224 +281,78 @@ margin-bottom: 15px;
 .preview-container {
 text-align: center;
 }
-
-.preview-image {
-  max-width: 100%;
-  max-height: 400px;
-  border-radius: 8px;
-  margin-bottom: 15px;
-}
-
-.preview-actions {
-  display: flex;
-  justify-content: center;
-  gap: 15px;
-}
-
-.scan-button {
-  background-color: #2ecc71;
-  color: white;
-  border: none;
-  padding: 10px 20px;
-  border-radius: 4px;
-  cursor: pointer;
-}
-
-.reset-button {
-  background-color: #7f8c8d;
-  color: white;
-  border: none;
-  padding: 10px 20px;
-  border-radius: 4px;
-  cursor: pointer;
-}
-
-.scanning-container {
-  padding: 40px;
-  text-align: center;
-}
-
-.scanning-animation {
-  width: 100%;
-  height: 200px;
-  background-color: #f0f0f0;
-  position: relative;
-  margin-bottom: 20px;
-  overflow: hidden;
-}
-
-.scanning-line {
-  position: absolute;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 2px;
-  background-color: #2ecc71;
-  animation: scan 2s infinite;
-}
-
-
-.furniture-checklist {
-  background-color: #fff;
-  padding: 20px;
-  border-radius: 8px;
-  margin-top: 20px;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-}
-
-.furniture-checklist h3 {
-  color: #624444;
-  margin-bottom: 20px;
-  text-align: center;
-}
-
-.checklist-container {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
-  gap: 15px;
-  padding: 10px;
-}
-.checkbox-item {
-  display: flex;
-  align-items: center;
-  position: relative;
-  padding-left: 35px;
-  cursor: pointer;
-  font-size: 0.9rem;
-  user-select: none;
-}
-
-.checkbox-item input {
-  position: absolute;
-  opacity: 0;
-  cursor: pointer;
-  height: 0;
-  width: 0;
-}
-
-.checkmark {
-  position: absolute;
-  left: 0;
-  height: 22px;
-  width: 22px;
-  background-color: #fff;
-  border: 2px solid #624444;
-  border-radius: 4px;
-  transition: all 0.2s ease;
-}
-
-.checkbox-item:hover input ~ .checkmark {
-  background-color: #f5f5f5;
-}
-
-.checkbox-item input:checked ~ .checkmark {
-  background-color: #624444;
-}
-
-.checkmark:after {
-  content: "";
-  position: absolute;
-  display: none;
-  left: 6px;
-  top: 2px;
-  width: 6px;
-  height: 12px;
-  border: solid white;
-  border-width: 0 2px 2px 0;
-  transform: rotate(45deg);
-}
-
-.checkbox-item input:checked ~ .checkmark:after {
-  display: block;
-}
-
-.label-text {
-  margin-left: 8px;
-  color: #333;
-}
-.confirm-button-container {
-  margin-top: 20px;
-  display: flex;
-  justify-content: center;
-}
-
-.confirm-button {
-  background-color: #2c3e50;
-  color: white;
-  padding: 12px 30px;
-  border: none;
-  border-radius: 8px;
-  font-size: 1rem;
-  font-weight: bold;
-  cursor: pointer;
-  transition: all 0.3s ease;
-}
-
-.confirm-button:hover {
-  background-color: #1a242f;
-  transform: translateY(-2px);
-  box-shadow: 0 4px 12px rgba(44, 62, 80, 0.3);
-}
-
-.confirm-button:active {
-  transform: translateY(0);
-}
-
-@keyframes scan {
-  0% { top: 0; }
-  100% { top: 200px; }
-}
-
-.scan-tips {
-  background-color: #f8f9fa;
-  padding: 20px;
-  border-radius: 8px;
-}
-
-.scan-tips ul {
-  padding-left: 20px;
-}
-
-.scan-tips li {
-  margin-bottom: 10px;
-}
-
-@media (max-width: 768px) {
-  .checklist-container {
-    grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+  
+  .preview-image {
+    max-width: 100%;
+    max-height: 400px;
+    border-radius: 8px;
+    margin-bottom: 15px;
   }
-
-  .checkbox-item {
-    font-size: 0.85rem;
+  
+  .preview-actions {
+    display: flex;
+    justify-content: center;
+    gap: 15px;
   }
-}
-
-@media (max-width: 480px) {
-  .checklist-container {
-    grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+  
+  .scan-button {
+    background-color: #2ecc71;
+    color: white;
+    border: none;
+    padding: 10px 20px;
+    border-radius: 4px;
+    cursor: pointer;
   }
-
-  .checkbox-item {
-    font-size: 0.8rem;
+  
+  .reset-button {
+    background-color: #7f8c8d;
+    color: white;
+    border: none;
+    padding: 10px 20px;
+    border-radius: 4px;
+    cursor: pointer;
   }
-
-  .checkmark {
-    height: 20px;
-    width: 20px;
+  
+  .scanning-container {
+    padding: 40px;
+    text-align: center;
   }
-}
-@media (max-width: 768px) {
-  .confirm-button {
-    padding: 10px 25px;
-    font-size: 0.95rem;
+  
+  .scanning-animation {
+    width: 100%;
+    height: 200px;
+    background-color: #f0f0f0;
+    position: relative;
+    margin-bottom: 20px;
+    overflow: hidden;
   }
-}
-
-@media (max-width: 480px) {
-  .confirm-button {
-    padding: 8px 20px;
-    font-size: 0.9rem;
+  
+  .scanning-line {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 2px;
+    background-color: #2ecc71;
+    animation: scan 2s infinite;
   }
-}
-
-</style>
+  
+  @keyframes scan {
+    0% { top: 0; }
+    100% { top: 200px; }
+  }
+  
+  .scan-tips {
+    background-color: #f8f9fa;
+    padding: 20px;
+    border-radius: 8px;
+  }
+  
+  .scan-tips ul {
+    padding-left: 20px;
+  }
+  
+  .scan-tips li {
+    margin-bottom: 10px;
+  }
+  </style>
