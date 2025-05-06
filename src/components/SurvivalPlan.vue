@@ -1,5 +1,6 @@
 <template>
-  <div class="survival-plan">
+  <!-- 中文版本 -->
+  <div class="survival-plan" v-if="currentLanguage === 'zh'">
     <div class="survival-header">
       <p class="subtitle">資源有限時的智能配給系統，增加您在災難中的生存機會</p>
     </div>
@@ -30,49 +31,125 @@
     <!-- 防災小知識輪播 -->
     <div class="disaster-carousel">
       <h4>防災小知識</h4>
-      <p class="carousel-text">{{ currentKnowledge }}</p>
+      <p class="carousel-text">{{ currentKnowledgeZh }}</p>
+    </div>
+  </div>
+
+  <!-- 英文版本 -->
+  <div class="survival-plan" v-else>
+    <div class="survival-header">
+      <p class="subtitle">Intelligent rationing system for limited resources, increasing your survival chance during disasters</p>
+    </div>
+    <div class="survival-features">
+      <div class="feature">
+        <div class="icon-circle">
+          <img src="@/assets/photo/brain.jpg" alt="Smart Resource Analysis" />
+        </div>
+        <h3>Smart Resource Analysis</h3>
+        <p>Calculate survival time based on available supplies and optimize daily rationing</p>
+      </div>
+      <div class="feature">
+        <div class="icon-circle">
+          <img src="@/assets/photo/supply.jpg" alt="Ration Management" />
+        </div>
+        <h3>Ration Management</h3>
+        <p>Auto-generate optimal food distribution plans based on headcount and special needs</p>
+      </div>
+      <div class="feature">
+        <div class="icon-circle">
+          <img src="@/assets/photo/survive.jpg" alt="Survival Tips" />
+        </div>
+        <h3>Survival Tips</h3>
+        <p>Provide real-time key suggestions on resource conservation and survival time extension</p>
+      </div>
+    </div>
+
+    <!-- 防災小知識輪播 -->
+    <div class="disaster-carousel">
+      <h4>Disaster Knowledge</h4>
+      <p class="carousel-text">{{ currentKnowledgeEn }}</p>
     </div>
   </div>
 </template>
 
 <script>
-import { ref, onMounted, onUnmounted } from 'vue'
+import { ref, onMounted, onUnmounted, watch } from 'vue'
 
 export default {
   name: 'SurvivalPlan',
   setup() {
-    // 防災小知識輪播
-    const disasterKnowledge = ref([
+    // 語言控制
+    const currentLanguage = ref(localStorage.getItem('preferredLanguage') === 'English' ? 'en' : 'zh')
+    
+    // 防災小知識輪播 - 中文
+    const disasterKnowledgeZh = ref([
       '在災難中，保持冷靜並優先確保飲用水的供應。',
       '請記住，食物的保存期限可能會因環境而縮短，定期檢查物資。',
       '學會使用簡單的工具，如打火石和濾水器，能顯著提高生存機率。'
     ])
+    
+    // 防災小知識輪播 - 英文
+    const disasterKnowledgeEn = ref([
+      'During disasters, stay calm and prioritize securing drinking water supplies.',
+      'Remember, food shelf life may shorten due to environmental conditions. Check supplies regularly.',
+      'Learning to use simple tools like firestones and water filters can significantly improve survival chances.'
+    ])
+    
     const currentKnowledgeIndex = ref(0)
-    const currentKnowledge = ref(disasterKnowledge.value[currentKnowledgeIndex.value])
+    const currentKnowledgeZh = ref(disasterKnowledgeZh.value[currentKnowledgeIndex.value])
+    const currentKnowledgeEn = ref(disasterKnowledgeEn.value[currentKnowledgeIndex.value])
 
     let knowledgeInterval = null
 
     const startKnowledgeRotation = () => {
       knowledgeInterval = setInterval(() => {
-        currentKnowledgeIndex.value = (currentKnowledgeIndex.value + 1) % disasterKnowledge.value.length
-        currentKnowledge.value = disasterKnowledge.value[currentKnowledgeIndex.value]
-      }, 2000) // 每5秒切換一次
+        currentKnowledgeIndex.value = (currentKnowledgeIndex.value + 1) % disasterKnowledgeZh.value.length
+        currentKnowledgeZh.value = disasterKnowledgeZh.value[currentKnowledgeIndex.value]
+        currentKnowledgeEn.value = disasterKnowledgeEn.value[currentKnowledgeIndex.value]
+      }, 5000) // 每5秒切換一次
     }
 
     const stopKnowledgeRotation = () => {
       clearInterval(knowledgeInterval)
     }
+    
+    // 定義事件處理函數，以便移除時能夠引用相同的函數
+    const handleStorageChange = (event) => {
+      if (event.key === 'preferredLanguage') {
+        currentLanguage.value = event.newValue === 'English' ? 'en' : 'zh'
+      }
+    }
 
     onMounted(() => {
+      // 載入用戶偏好的語言
+      const savedLanguage = localStorage.getItem('preferredLanguage')
+      if (savedLanguage === 'English') {
+        currentLanguage.value = 'en'
+      } else {
+        currentLanguage.value = 'zh'
+      }
+      
       startKnowledgeRotation()
+      
+      // 添加事件監聽器
+      window.addEventListener('storage', handleStorageChange)
+    })
+    
+    // 監聽語言變化
+    watch(currentLanguage, (newVal) => {
+      localStorage.setItem('preferredLanguage', newVal === 'zh' ? '繁體中文' : 'English')
     })
 
     onUnmounted(() => {
       stopKnowledgeRotation()
+      // 正確移除事件監聽器
+      window.removeEventListener('storage', handleStorageChange)
     })
 
     return {
-      currentKnowledge
+      currentLanguage,
+      currentKnowledgeZh,
+      currentKnowledgeEn
     }
   }
 }
